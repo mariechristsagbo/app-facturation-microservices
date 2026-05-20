@@ -1,0 +1,19 @@
+{
+  "name": "facturation-microservices",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "start": "node scripts/start-all.js",
+    "start:auth": "node services/auth-service/server.js",
+    "start:clients": "node services/client-service/server.js",
+    "start:produits": "node services/product-service/server.js",
+    "start:stock": "node services/stock-service/server.js",
+    "start:commandes": "node services/order-service/server.js",
+    "start:factures": "node services/invoice-service/server.js",
+    "start:paiements": "node services/payment-service/server.js"
+  },
+  "dependencies": {
+    "express": "^5.1.0"
+  }
+}
