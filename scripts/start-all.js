@@ -20,7 +20,7 @@ const children = services.map(([name, script]) => {
   child.stderr.on('data', (data) => printLines(name, data));
 
   child.on('exit', (code) => {
-    console.log(`[${name}] arrete avec le code ${code}`);
+    console.log(`[${name}] arrêté avec le code ${code}`);
   });
 
   return child;
