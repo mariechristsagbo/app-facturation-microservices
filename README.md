@@ -1,4 +1,4 @@
-# Facturation Microservices
+# Facturation microservices
 
 Mini-projet Node.js/Express pour le cours de microservices. Chaque dossier dans `services/` est un petit programme indépendant avec sa propre base JSON locale (je vais migrer plus tard vers une bonne base de données PostgreSQL ou SQL Lite).
 
@@ -7,15 +7,15 @@ Mini-projet Node.js/Express pour le cours de microservices. Chaque dossier dans 
 
 ## Services
 
-| Service | Port | Role |
+| Service | Port | Rôle |
 | --- | --- | --- |
 | `auth-service` | `3001` | Utilisateurs et login |
 | `client-service` | `3002` | Gestion des clients |
 | `product-service` | `3003` | Gestion des produits |
-| `stock-service` | `3004` | Stock, entrees, sorties, reservations |
-| `order-service` | `3005` | Creation des commandes |
-| `invoice-service` | `3006` | Generation des factures |
-| `payment-service` | `3007` | Paiements et mise a jour des factures |
+| `stock-service` | `3004` | Stock, entrées, sorties, réservations |
+| `order-service` | `3005` | Création des commandes |
+| `invoice-service` | `3006` | Génération des factures |
+| `payment-service` | `3007` | Paiements et mise à jour des factures |
 
 ## Installation
 
@@ -47,7 +47,7 @@ curl -X POST http://localhost:3001/login \
   -d '{"email":"admin@facturation.test","password":"admin123"}'
 ```
 
-Creer un client:
+Créer un client:
 
 ```bash
 curl -X POST http://localhost:3002/clients \
@@ -55,7 +55,7 @@ curl -X POST http://localhost:3002/clients \
   -d '{"nom":"Kossi","telephone":"97000000","email":"kossi@test.com","adresse":"Cotonou"}'
 ```
 
-Creer un produit:
+Créer un produit:
 
 ```bash
 curl -X POST http://localhost:3003/produits \
@@ -63,15 +63,15 @@ curl -X POST http://localhost:3003/produits \
   -d '{"nom":"Clavier","reference":"CLV-001","prix":15000}'
 ```
 
-Ajouter du stock pour le produit cree:
+Ajouter du stock pour le produit créé:
 
 ```bash
 curl -X POST http://localhost:3004/stocks/entrees \
   -H "Content-Type: application/json" \
-  -d '{"produitId":"prd_demo","quantite":50,"entrepot":"Entrepot principal"}'
+  -d '{"produitId":"prd_demo","quantite":50,"entrepot":"Entrepôt principal"}'
 ```
 
-Creer une commande avec les donnees demo:
+Créer une commande avec les données démo:
 
 ```bash
 curl -X POST http://localhost:3005/commandes \
@@ -79,7 +79,7 @@ curl -X POST http://localhost:3005/commandes \
   -d '{"clientId":"cli_demo","items":[{"produitId":"prd_demo","quantite":2}]}'
 ```
 
-Creer une facture depuis une commande:
+Créer une facture depuis une commande:
 
 ```bash
 curl -X POST http://localhost:3006/factures \
