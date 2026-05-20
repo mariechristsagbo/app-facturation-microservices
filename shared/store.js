@@ -33,7 +33,7 @@ export class JsonStore {
 
   async findById(id) {
     const data = await this.read();
-    return data.find((item) => item.id === id);
+    return data.find((item) => String(item.id) === String(id));
   }
 
   async create(record) {
@@ -45,7 +45,7 @@ export class JsonStore {
 
   async update(id, patch) {
     const data = await this.read();
-    const index = data.findIndex((item) => item.id === id);
+    const index = data.findIndex((item) => String(item.id) === String(id));
 
     if (index === -1) {
       return null;
@@ -58,7 +58,7 @@ export class JsonStore {
 
   async remove(id) {
     const data = await this.read();
-    const filtered = data.filter((item) => item.id !== id);
+    const filtered = data.filter((item) => String(item.id) !== String(id));
 
     if (filtered.length === data.length) {
       return false;

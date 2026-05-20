@@ -9,13 +9,15 @@ Mini-projet Node.js/Express pour le cours de microservices. Chaque dossier dans 
 
 | Service | Port | Rôle |
 | --- | --- | --- |
-| `auth-service` | `3001` | Utilisateurs et login |
+| `auth-service` | `3001` | Gestion des utilisateurs et login |
 | `client-service` | `3002` | Gestion des clients |
 | `product-service` | `3003` | Gestion des produits |
-| `stock-service` | `3004` | Stock, entrées, sorties, réservations |
-| `order-service` | `3005` | Création des commandes |
-| `invoice-service` | `3006` | Génération des factures |
-| `payment-service` | `3007` | Paiements et mise à jour des factures |
+| `stock-service` | `3004` | Gestion des stocks |
+| `order-service` | `3005` | Gestion des commandes |
+| `invoice-service` | `3006` | Gestion des factures |
+| `payment-service` | `3007` | Gestion des règlements |
+| `cash-register-service` | `3008` | Gestion des caisses |
+| `warehouse-service` | `3009` | Gestion des entrepôts |
 
 ## Installation
 
@@ -35,7 +37,26 @@ npm start
 npm run start:clients
 npm run start:produits
 npm run start:stock
+npm run start:commandes
+npm run start:factures
+npm run start:reglements
+npm run start:caisses
+npm run start:entrepots
 ```
+
+## Endpoints métier
+
+Tous les services métier suivent le même pattern:
+
+| Action | Méthode | Endpoint |
+| --- | --- | --- |
+| Créer | `POST` | `/create` |
+| Lister | `GET` | `/list` |
+| Voir le détail | `GET` | `/view/:id` |
+| Modifier | `PATCH` | `/edit/:id` |
+| Supprimer | `DELETE` | `/delete/:id` |
+
+`auth-service` expose aussi `POST /login` pour la connexion.
 
 ## Test rapide avec curl
 
@@ -50,51 +71,63 @@ curl -X POST http://localhost:3001/login \
 Créer un client:
 
 ```bash
-curl -X POST http://localhost:3002/clients \
+curl -X POST http://localhost:3002/create \
   -H "Content-Type: application/json" \
-  -d '{"nom":"Kossi","telephone":"97000000","email":"kossi@test.com","adresse":"Cotonou"}'
+  -d '{"nom":"Sarr","prenom":"Cheikh","telephone":"774567890"}'
 ```
 
-Créer un produit:
+Lister les clients:
 
 ```bash
-curl -X POST http://localhost:3003/produits \
-  -H "Content-Type: application/json" \
-  -d '{"nom":"Clavier","reference":"CLV-001","prix":15000}'
+curl http://localhost:3002/list
 ```
 
-Ajouter du stock pour le produit créé:
+Voir un client:
 
 ```bash
-curl -X POST http://localhost:3004/stocks/entrees \
-  -H "Content-Type: application/json" \
-  -d '{"produitId":"prd_demo","quantite":50,"entrepot":"Entrepôt principal"}'
+curl http://localhost:3002/view/1
 ```
 
-Créer une commande avec les données démo:
+Créer une commande:
 
 ```bash
-curl -X POST http://localhost:3005/commandes \
+curl -X POST http://localhost:3005/create \
   -H "Content-Type: application/json" \
-  -d '{"clientId":"cli_demo","items":[{"produitId":"prd_demo","quantite":2}]}'
+  -d '{"client_id":4,"total":8000}'
 ```
 
 Créer une facture depuis une commande:
 
 ```bash
-curl -X POST http://localhost:3006/factures \
+curl -X POST http://localhost:3006/create \
   -H "Content-Type: application/json" \
-  -d '{"commandeId":"ID_DE_LA_COMMANDE"}'
+  -d '{"commande_id":4}'
 ```
 
-Payer une facture:
+Enregistrer un règlement:
 
 ```bash
-curl -X POST http://localhost:3007/paiements \
+curl -X POST http://localhost:3007/create \
   -H "Content-Type: application/json" \
-  -d '{"factureId":"ID_DE_LA_FACTURE","montant":10000,"mode":"cash"}'
+  -d '{"facture_id":4,"montant":8000,"mode":"espèces","caisse_id":1}'
+```
+
+Créer une caisse:
+
+```bash
+curl -X POST http://localhost:3008/create \
+  -H "Content-Type: application/json" \
+  -d '{"libelle":"Caisse agence Nord"}'
+```
+
+Créer un entrepôt:
+
+```bash
+curl -X POST http://localhost:3009/create \
+  -H "Content-Type: application/json" \
+  -d '{"nom":"Entrepôt Kaolack","ville":"Kaolack"}'
 ```
 
 ## Idée importante
 
-Dans ce projet, `order-service` ne modifie pas directement la base de `stock-service`. Il appelle plutôt l'API de `stock-service`. Chaque service garde sa responsabilité et communique avec les autres par HTTP.
+Chaque service garde sa propre responsabilité, son propre fichier JSON local et expose la même forme d'API métier. Les échanges entre services se font par HTTP quand une ressource dépend d'une autre.

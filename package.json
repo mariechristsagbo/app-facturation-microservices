@@ -4,14 +4,17 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "start": "node scripts/start-all.js",
-    "start:auth": "node services/auth-service/server.js",
-    "start:clients": "node services/client-service/server.js",
-    "start:produits": "node services/product-service/server.js",
-    "start:stock": "node services/stock-service/server.js",
-    "start:commandes": "node services/order-service/server.js",
-    "start:factures": "node services/invoice-service/server.js",
-    "start:paiements": "node services/payment-service/server.js"
+    "start": "node --env-file=.env scripts/start-all.js",
+    "start:auth": "node --env-file=.env services/auth-service/server.js",
+    "start:clients": "node --env-file=.env services/client-service/server.js",
+    "start:produits": "node --env-file=.env services/product-service/server.js",
+    "start:stock": "node --env-file=.env services/stock-service/server.js",
+    "start:commandes": "node --env-file=.env services/order-service/server.js",
+    "start:factures": "node --env-file=.env services/invoice-service/server.js",
+    "start:paiements": "node --env-file=.env services/payment-service/server.js",
+    "start:reglements": "node --env-file=.env services/payment-service/server.js",
+    "start:caisses": "node --env-file=.env services/cash-register-service/server.js",
+    "start:entrepots": "node --env-file=.env services/warehouse-service/server.js"
   },
   "dependencies": {
     "express": "^5.1.0"
