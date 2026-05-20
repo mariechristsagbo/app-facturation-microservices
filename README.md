@@ -1,6 +1,8 @@
 # Facturation Microservices
 
-Mini-projet Node.js/Express pour un cours de microservices. Chaque dossier dans `services/` est un petit programme independant avec sa propre base JSON locale.
+Mini-projet Node.js/Express pour le cours de microservices. Chaque dossier dans `services/` est un petit programme indépendant avec sa propre base JSON locale (je vais migrer plus tard vers une bonne base de données PostgreSQL ou SQL Lite).
+
+
 
 ## Services
 
@@ -92,6 +94,6 @@ curl -X POST http://localhost:3007/paiements \
   -d '{"factureId":"ID_DE_LA_FACTURE","montant":10000,"mode":"cash"}'
 ```
 
-## Idee importante
+## Idée importante
 
-Dans ce projet, `order-service` ne modifie pas directement la base de `stock-service`. Il appelle plutot l'API de `stock-service`. C'est cela l'esprit microservices: chaque service garde sa responsabilite et communique avec les autres par HTTP.
+Dans ce projet, `order-service` ne modifie pas directement la base de `stock-service`. Il appelle plutôt l'API de `stock-service`. Chaque service garde sa responsabilité et communique avec les autres par HTTP.
