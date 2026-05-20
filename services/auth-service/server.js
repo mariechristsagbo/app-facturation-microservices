@@ -8,8 +8,8 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const users = new JsonStore(path.join(__dirname, 'data', 'users.json'), [
   {
     id: 'usr_admin',
-    nom: 'Administrateur',
-    email: 'admin@facturation.test',
+    nom: 'Marie-Christ Sagbo',
+    email: 'mariechristsagbo@gmail.com',
     password: 'admin123',
     role: 'admin',
     createdAt: new Date().toISOString()
@@ -28,7 +28,7 @@ app.post('/utilisateurs', asyncRoute(async (req, res) => {
 
   const existing = (await users.all()).find((user) => user.email === req.body.email);
   if (existing) {
-    throw httpError(409, 'Cet email existe deja');
+    throw httpError(409, 'Cet email existe déjà');
   }
 
   const user = await users.create({
@@ -52,11 +52,11 @@ app.post('/login', asyncRoute(async (req, res) => {
   );
 
   if (!user) {
-    throw httpError(401, 'Identifiants invalides');
+    throw httpError(401, 'Vos identifiants sont invalides');
   }
 
   res.json({
-    token: `demo-token-${user.id}`,
+    token: `token-${user.id}`,
     utilisateur: {
       id: user.id,
       nom: user.nom,

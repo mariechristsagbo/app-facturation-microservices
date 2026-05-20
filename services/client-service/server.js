@@ -5,16 +5,7 @@ import { createId, JsonStore } from '../../shared/store.js';
 
 const serviceName = 'client-service';
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const clients = new JsonStore(path.join(__dirname, 'data', 'clients.json'), [
-  {
-    id: 'cli_demo',
-    nom: 'Client Demo',
-    telephone: '+229 0100000000',
-    email: 'client@demo.test',
-    adresse: 'Cotonou',
-    createdAt: new Date().toISOString()
-  }
-]);
+const clients = new JsonStore(path.join(__dirname, 'data', 'clients.json'));
 
 const app = createServiceApp(serviceName);
 

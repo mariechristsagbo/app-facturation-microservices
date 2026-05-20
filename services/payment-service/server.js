@@ -26,20 +26,20 @@ app.post('/paiements', asyncRoute(async (req, res) => {
 
   const invoice = await getJson(
     `${INVOICE_SERVICE_URL}/factures/${req.body.factureId}`,
-    'Impossible de recuperer la facture'
+    'Impossible de récupérer la facture'
   );
 
   if (invoice.statut === 'PAYEE') {
-    throw httpError(409, 'Cette facture est deja payee');
+    throw httpError(409, 'Cette facture est déjà payée');
   }
 
   if (invoice.statut === 'ANNULEE') {
-    throw httpError(409, 'Impossible de payer une facture annulee');
+    throw httpError(409, 'Impossible de payer une facture annulée');
   }
 
   const amount = Number(req.body.montant);
   if (amount <= 0) {
-    throw httpError(400, 'Le montant doit etre positif');
+    throw httpError(400, 'Le montant doit être positif');
   }
 
   const paid = (await payments.all())
@@ -48,7 +48,7 @@ app.post('/paiements', asyncRoute(async (req, res) => {
   const remaining = invoice.total - paid;
 
   if (amount > remaining) {
-    throw httpError(400, `Montant trop eleve. Reste a payer: ${remaining}`);
+    throw httpError(400, `Montant trop élevé. Reste à payer: ${remaining}`);
   }
 
   const payment = await payments.create({
@@ -66,7 +66,7 @@ app.post('/paiements', asyncRoute(async (req, res) => {
     `${INVOICE_SERVICE_URL}/factures/${invoice.id}/statut`,
     'PATCH',
     { statut: newStatus },
-    'Impossible de mettre a jour la facture'
+    'Impossible de mettre à jour la facture'
   );
 
   res.status(201).json({ paiement: payment, facture: updatedInvoice });

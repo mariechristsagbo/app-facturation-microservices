@@ -40,7 +40,7 @@ app.post('/stocks/entrees', asyncRoute(async (req, res) => {
 
   const quantity = Number(req.body.quantite);
   if (quantity <= 0) {
-    throw httpError(400, 'La quantite doit etre positive');
+    throw httpError(400, 'La quantité doit être positive');
   }
 
   const stock = await increaseStock(req.body.produitId, quantity, req.body.entrepot || 'Entrepot principal');
@@ -82,7 +82,7 @@ app.post('/stocks/reserver', asyncRoute(async (req, res) => {
     await movements.create(createMovement('RESERVATION', item.produitId, quantity, req.body.reference));
   }
 
-  res.json({ message: 'Stock reserve', stocks: updatedStocks });
+  res.json({ message: 'Stock réservé', stocks: updatedStocks });
 }));
 
 async function findStock(produitId) {
@@ -118,7 +118,7 @@ async function increaseStock(produitId, quantity, entrepot) {
 
 async function decreaseStock(produitId, quantity) {
   if (quantity <= 0) {
-    throw httpError(400, 'La quantite doit etre positive');
+    throw httpError(400, 'La quantité doit être positive');
   }
 
   const data = await stocks.all();

@@ -39,12 +39,12 @@ app.post('/factures', asyncRoute(async (req, res) => {
 
   const existing = (await invoices.all()).find((invoice) => invoice.commandeId === req.body.commandeId);
   if (existing) {
-    throw httpError(409, 'Cette commande a deja une facture');
+    throw httpError(409, 'Cette commande a déjà une facture');
   }
 
   const order = await getJson(
     `${ORDER_SERVICE_URL}/commandes/${req.body.commandeId}`,
-    'Impossible de recuperer la commande'
+    'Impossible de récuperer la commande'
   );
 
   const invoice = await invoices.create({
