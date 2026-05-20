@@ -8,9 +8,9 @@ const serviceName = 'order-service';
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const orders = new JsonStore(path.join(__dirname, 'data', 'orders.json'), []);
 
-const CLIENT_SERVICE_URL = process.env.CLIENT_SERVICE_URL || 'http://localhost:3002';
-const PRODUCT_SERVICE_URL = process.env.PRODUCT_SERVICE_URL || 'http://localhost:3003';
-const STOCK_SERVICE_URL = process.env.STOCK_SERVICE_URL || 'http://localhost:3004';
+const CLIENT_SERVICE_URL = process.env.CLIENT_SERVICE_URL;
+const PRODUCT_SERVICE_URL = process.env.PRODUCT_SERVICE_URL;
+const STOCK_SERVICE_URL = process.env.STOCK_SERVICE_URL;
 
 const app = createServiceApp(serviceName);
 

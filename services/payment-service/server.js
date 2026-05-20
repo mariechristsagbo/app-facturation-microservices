@@ -8,7 +8,7 @@ const serviceName = 'payment-service';
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const payments = new JsonStore(path.join(__dirname, 'data', 'payments.json'), []);
 
-const INVOICE_SERVICE_URL = process.env.INVOICE_SERVICE_URL || 'http://localhost:3006';
+const INVOICE_SERVICE_URL = process.env.INVOICE_SERVICE_URL;
 
 const app = createServiceApp(serviceName);
 
