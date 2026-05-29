@@ -11,8 +11,7 @@
     "start:stock": "node --env-file=.env services/stock-service/server.js",
     "start:commandes": "node --env-file=.env services/order-service/server.js",
     "start:factures": "node --env-file=.env services/invoice-service/server.js",
-    "start:paiements": "node --env-file=.env services/payment-service/server.js",
-    "start:reglements": "node --env-file=.env services/payment-service/server.js",
+    "start:reglements": "node --env-file=.env services/reglement-service/server.js",
     "start:caisses": "node --env-file=.env services/cash-register-service/server.js",
     "start:entrepots": "node --env-file=.env services/warehouse-service/server.js"
   },

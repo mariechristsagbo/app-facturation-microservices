@@ -89,12 +89,10 @@ app.patch('/edit/:id', asyncRoute(async (req, res) => {
   }
 
   const updatedInvoice = await invoices.update(req.params.id, {
-    commande_id: req.body.commande_id ?? req.body.commandeId ?? invoice.commande_id,
-    commandeId: req.body.commande_id ?? req.body.commandeId ?? invoice.commandeId,
+    commande_id: req.body.commande_id ?? invoice.commande_id,
     numero: req.body.numero ?? invoice.numero,
     date_emission: req.body.date_emission ?? invoice.date_emission,
     montant: req.body.montant === undefined ? invoice.montant : Number(req.body.montant),
-    total: req.body.montant === undefined ? invoice.total : Number(req.body.montant),
     statut: req.body.statut ?? invoice.statut
   });
 
@@ -128,10 +126,10 @@ registerCommonHandlers(app, serviceName);
 listen(app, serviceName, 3006);
 
 async function createInvoice(body, options = {}) {
-  const orderId = body.commande_id ?? body.commandeId;
-  const amount = body.montant === undefined ? null : Number(body.montant);
+  requireFields(body, ['commande_id']);
 
-  requireFields({ orderId }, ['orderId']);
+  const orderId = body.commande_id;
+  const amount = body.montant === undefined ? null : Number(body.montant);
 
   if (amount !== null && (!Number.isFinite(amount) || amount < 0)) {
     throw httpError(400, 'Le montant doit être un nombre positif');
@@ -146,22 +144,18 @@ async function createInvoice(body, options = {}) {
     throw httpError(409, 'Cette commande a déjà une facture');
   }
 
-  const order = options.validateOrder ? await getOrder(orderId) : { id: orderId, total: amount ?? 0, client: null, items: [] };
+  const order = options.validateOrder ? await getOrder(orderId) : { id: orderId, total: amount ?? 0 };
   const invoiceId = nextNumericId(await invoices.all());
-  const date = body.date_emission || body.date || formatDate();
+  const date = body.date_emission || formatDate();
   const invoiceAmount = amount ?? order.total;
 
   return invoices.create({
     id: invoiceId,
     commande_id: formatId(order.id ?? orderId),
-    commandeId: order.id ?? orderId,
     numero: body.numero || formatInvoiceNumber(invoiceId, date),
     date_emission: date,
     montant: invoiceAmount,
-    total: invoiceAmount,
     statut: body.statut || 'non payée',
-    client: order.client || null,
-    lignes: order.lignes || [],
     createdAt: new Date(`${date}T00:00:00.000Z`).toISOString()
   });
 }
@@ -176,7 +170,7 @@ function formatInvoiceSummary(invoice) {
     id: formatId(invoice.id),
     commande_id: getOrderId(invoice),
     numero: invoice.numero,
-    montant: getAmount(invoice)
+    montant: invoice.montant
   };
 }
 
@@ -186,7 +180,7 @@ function formatInvoiceDetails(invoice) {
     commande_id: getOrderId(invoice),
     numero: invoice.numero,
     date_emission: invoice.date_emission || formatDate(invoice.createdAt),
-    montant: getAmount(invoice),
+    montant: invoice.montant,
     statut: invoice.statut
   };
 }
@@ -196,11 +190,7 @@ function formatInvoiceNumber(id, date) {
 }
 
 function getOrderId(invoice) {
-  return formatId(invoice.commande_id ?? invoice.commandeId);
-}
-
-function getAmount(invoice) {
-  return invoice.montant ?? invoice.total;
+  return formatId(invoice.commande_id);
 }
 
 function validateInvoiceStatus(status) {

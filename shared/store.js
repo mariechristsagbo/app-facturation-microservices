@@ -51,7 +51,7 @@ export class JsonStore {
       return null;
     }
 
-    data[index] = { ...data[index], ...patch, updatedAt: new Date().toISOString() };
+    data[index] = { ...data[index], ...patch };
     await this.write(data);
     return data[index];
   }

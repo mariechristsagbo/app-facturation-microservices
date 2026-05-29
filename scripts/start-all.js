@@ -7,7 +7,7 @@ const services = [
   ['stock-service', 'services/stock-service/server.js'],
   ['order-service', 'services/order-service/server.js'],
   ['invoice-service', 'services/invoice-service/server.js'],
-  ['payment-service', 'services/payment-service/server.js'],
+  ['reglement-service', 'services/reglement-service/server.js'],
   ['cash-register-service', 'services/cash-register-service/server.js'],
   ['warehouse-service', 'services/warehouse-service/server.js']
 ];

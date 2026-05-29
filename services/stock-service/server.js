@@ -83,7 +83,7 @@ app.patch('/edit/:id', asyncRoute(async (req, res) => {
   }
 
   const updatedStock = await stocks.update(req.params.id, {
-    produit_id: req.body.produit_id ?? req.body.produitId ?? stock.produit_id,
+    produit_id: req.body.produit_id ?? stock.produit_id,
     entrepot: req.body.entrepot ?? stock.entrepot,
     quantite: req.body.quantite === undefined ? stock.quantite : Number(req.body.quantite)
   });
@@ -120,7 +120,7 @@ listen(app, serviceName, 3004);
 function formatStock(stock) {
   return {
     id: formatId(stock.id),
-    produit_id: formatId(stock.produit_id ?? stock.produitId),
+    produit_id: formatId(stock.produit_id),
     entrepot: stock.entrepot,
     quantite: stock.quantite
   };

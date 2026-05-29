@@ -15,7 +15,7 @@ Mini-projet Node.js/Express pour le cours de microservices. Chaque dossier dans 
 | `stock-service` | `3004` | Gestion des stocks |
 | `order-service` | `3005` | Gestion des commandes |
 | `invoice-service` | `3006` | Gestion des factures |
-| `payment-service` | `3007` | Gestion des règlements |
+| `reglement-service` | `3007` | Gestion des règlements |
 | `cash-register-service` | `3008` | Gestion des caisses |
 | `warehouse-service` | `3009` | Gestion des entrepôts |
 
@@ -93,7 +93,7 @@ Créer une commande:
 ```bash
 curl -X POST http://localhost:3005/create \
   -H "Content-Type: application/json" \
-  -d '{"client_id":4,"total":8000}'
+  -d '{"client_id":4,"date":"2026-05-20","lignes":[{"produit_id":4,"quantite":1}]}'
 ```
 
 Créer une facture depuis une commande:
@@ -101,7 +101,7 @@ Créer une facture depuis une commande:
 ```bash
 curl -X POST http://localhost:3006/create \
   -H "Content-Type: application/json" \
-  -d '{"commande_id":4}'
+  -d '{"commande_id":4,"date_emission":"2026-05-20","montant":8000}'
 ```
 
 Enregistrer un règlement:

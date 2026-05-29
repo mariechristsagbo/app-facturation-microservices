@@ -89,7 +89,7 @@ app.patch('/edit/:id', asyncRoute(async (req, res) => {
   }
 
   const updatedOrder = await orders.update(req.params.id, {
-    client_id: req.body.client_id ?? req.body.clientId ?? order.client_id,
+    client_id: req.body.client_id ?? order.client_id,
     date: req.body.date ?? order.date,
     total: req.body.total === undefined ? order.total : Number(req.body.total),
     statut: req.body.statut ?? order.statut,
@@ -130,30 +130,24 @@ registerCommonHandlers(app, serviceName);
 listen(app, serviceName, 3005);
 
 async function createOrder(body, options = {}) {
-  const clientId = body.client_id ?? body.clientId;
-  const requestLines = body.lignes ?? body.items ?? [];
-  const bodyTotal = body.total === undefined ? null : Number(body.total);
+  requireFields(body, ['client_id']);
 
-  requireFields({ clientId }, ['clientId']);
+  const clientId = body.client_id;
+  const requestLines = body.lignes ?? [];
 
   if (!Array.isArray(requestLines)) {
     throw httpError(400, 'Les lignes de commande doivent être une liste');
   }
 
-  if (requestLines.length === 0 && bodyTotal === null) {
-    throw httpError(400, 'La commande doit contenir au moins un produit ou un total');
-  }
-
-  if (bodyTotal !== null && (!Number.isFinite(bodyTotal) || bodyTotal < 0)) {
-    throw httpError(400, 'Le total doit être un nombre positif');
+  if (requestLines.length === 0) {
+    throw httpError(400, 'La commande doit contenir au moins un produit');
   }
 
   const client = options.validateExternalServices ? await getClient(clientId) : { id: clientId };
   const lines = [];
-  const items = [];
 
   for (const line of requestLines) {
-    const productId = line.produit_id ?? line.produitId;
+    const productId = line.produit_id;
     const quantity = Number(line.quantite);
 
     if (!productId || !line.quantite) {
@@ -176,17 +170,9 @@ async function createOrder(body, options = {}) {
       quantite: quantity,
       prix: unitPrice
     });
-
-    items.push({
-      produitId: product.id ?? productId,
-      nom: product.nom || null,
-      prixUnitaire: unitPrice,
-      quantite: quantity,
-      sousTotal: unitPrice * quantity
-    });
   }
 
-  const total = bodyTotal ?? lines.reduce((sum, line) => sum + line.prix * line.quantite, 0);
+  const total = lines.reduce((sum, line) => sum + line.prix * line.quantite, 0);
   const orderId = nextNumericId(await orders.all());
   const date = body.date || formatDate();
 
@@ -197,12 +183,6 @@ async function createOrder(body, options = {}) {
     total,
     statut: body.statut || 'validée',
     lignes: lines,
-    client: {
-      id: client.id ?? clientId,
-      nom: client.nom || null,
-      telephone: client.telephone || null
-    },
-    items,
     createdAt: new Date(`${date}T00:00:00.000Z`).toISOString()
   });
 }
@@ -235,21 +215,13 @@ function formatOrderDetails(order) {
 }
 
 function getClientId(order) {
-  return formatId(order.client_id ?? order.client?.id);
+  return formatId(order.client_id);
 }
 
 function getOrderLines(order) {
-  if (Array.isArray(order.lignes)) {
-    return order.lignes.map((line) => ({
-      produit_id: formatId(line.produit_id ?? line.produitId),
-      quantite: line.quantite,
-      prix: line.prix
-    }));
-  }
-
-  return (order.items || []).map((item) => ({
-    produit_id: formatId(item.produit_id ?? item.produitId),
-    quantite: item.quantite,
-    prix: item.prix ?? item.prixUnitaire
+  return order.lignes.map((line) => ({
+    produit_id: formatId(line.produit_id),
+    quantite: line.quantite,
+    prix: line.prix
   }));
 }

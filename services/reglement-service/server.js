@@ -6,7 +6,7 @@ import { asyncRoute, createServiceApp, httpError, listen, registerCommonHandlers
 import { getJson, sendJson } from '../../shared/http.js';
 import { JsonStore } from '../../shared/store.js';
 
-const serviceName = 'payment-service';
+const serviceName = 'reglement-service';
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const payments = new JsonStore(path.join(__dirname, 'data', 'payments.json'), [
   {
@@ -85,11 +85,11 @@ app.patch('/edit/:id', asyncRoute(async (req, res) => {
   }
 
   const updatedPayment = await payments.update(req.params.id, {
-    facture_id: req.body.facture_id ?? req.body.factureId ?? payment.facture_id,
+    facture_id: req.body.facture_id ?? payment.facture_id,
     montant: req.body.montant === undefined ? payment.montant : Number(req.body.montant),
     mode: req.body.mode ?? payment.mode,
     date: req.body.date ?? payment.date,
-    caisse_id: req.body.caisse_id ?? req.body.caisseId ?? payment.caisse_id
+    caisse_id: req.body.caisse_id ?? payment.caisse_id
   });
 
   res.json({
@@ -122,8 +122,9 @@ registerCommonHandlers(app, serviceName);
 listen(app, serviceName, 3007);
 
 async function createPayment(body) {
-  const invoiceId = body.facture_id ?? body.factureId;
-  requireFields({ invoiceId, montant: body.montant, mode: body.mode }, ['invoiceId', 'montant', 'mode']);
+  requireFields(body, ['facture_id', 'montant', 'mode']);
+
+  const invoiceId = body.facture_id;
 
   const amount = Number(body.montant);
   if (!Number.isFinite(amount) || amount <= 0) {
@@ -141,11 +142,10 @@ async function createPayment(body) {
   const payment = await payments.create({
     id: nextNumericId(await payments.all()),
     facture_id: formatId(invoice.id ?? invoiceId),
-    factureId: invoice.id ?? invoiceId,
     montant: amount,
     mode: body.mode,
     date,
-    caisse_id: body.caisse_id ?? body.caisseId ?? null,
+    caisse_id: body.caisse_id ?? null,
     reference: body.reference || null,
     createdAt: new Date(`${date}T00:00:00.000Z`).toISOString()
   });
@@ -204,5 +204,5 @@ function formatPaymentDetails(payment) {
 }
 
 function getInvoiceId(payment) {
-  return formatId(payment.facture_id ?? payment.factureId);
+  return formatId(payment.facture_id);
 }
