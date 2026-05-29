@@ -47,7 +47,7 @@ const PRODUCT_SERVICE_URL = requireEnv('PRODUCT_SERVICE_URL');
 const app = createServiceApp(serviceName);
 
 app.post('/create', asyncRoute(async (req, res) => {
-  const order = await createOrder(req.body, { validateExternalServices: false });
+  const order = await createOrder(req.body, { validateExternalServices: true });
 
   res.status(201).json({
     service: 'commande',
