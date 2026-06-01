@@ -13,28 +13,20 @@ services:
       LLDAP_LDAP_USER_DN: admin
       LLDAP_LDAP_USER_EMAIL: ${LLDAP_LDAP_USER_EMAIL}
       LLDAP_LDAP_USER_PASS: ${LLDAP_LDAP_USER_PASS}
-      LLDAP_HTTP_URL: https://${LLDAP_HOST}
+      LLDAP_HTTP_URL: https://${LLDAP_HOST}:8443
     volumes:
       - lldap_data:/data
     networks:
       - proxy
       - auth-backend
-    labels:
-      - traefik.enable=true
-      - traefik.docker.network=proxy
-      - traefik.http.routers.lldap.rule=Host(`${LLDAP_HOST}`)
-      - traefik.http.routers.lldap.entrypoints=websecure
-      - traefik.http.routers.lldap.tls=true
-      - traefik.http.routers.lldap.middlewares=authelia@docker
-      - traefik.http.routers.lldap.service=lldap
-      - traefik.http.services.lldap.loadbalancer.server.port=17170
 
   authelia:
     image: authelia/authelia:4.38
     container_name: authelia
     restart: unless-stopped
     depends_on:
-      - lldap
+      lldap:
+        condition: service_healthy
     environment:
       TZ: ${TZ}
       AUTHELIA_JWT_SECRET: ${AUTHELIA_JWT_SECRET}
@@ -47,19 +39,6 @@ services:
     networks:
       - proxy
       - auth-backend
-    labels:
-      - traefik.enable=true
-      - traefik.docker.network=proxy
-      - traefik.http.routers.authelia.rule=Host(`${HOST}`) && PathPrefix(`/auth`)
-      - traefik.http.routers.authelia.entrypoints=websecure
-      - traefik.http.routers.authelia.tls=true
-      - traefik.http.routers.authelia.priority=200
-      - traefik.http.routers.authelia.service=authelia
-      - traefik.http.services.authelia.loadbalancer.server.port=9091
-      - traefik.http.middlewares.authelia.forwardauth.address=http://authelia:9091/auth/api/authz/forward-auth
-      - traefik.http.middlewares.authelia.forwardauth.trustForwardHeader=true
-      - traefik.http.middlewares.authelia.forwardauth.maxResponseBodySize=8192
-      - traefik.http.middlewares.authelia.forwardauth.authResponseHeaders=Remote-User,Remote-Groups,Remote-Name,Remote-Email
 
 volumes:
   lldap_data:

@@ -88,9 +88,9 @@ npm run auth:config
 npm run auth:up
 ```
 
-Ouvrir `https://app.facturation.test`. Le navigateur affichera probablement un avertissement car le certificat est auto-signé. L'interface LLDAP est sur `https://admin.facturation.test` et le dashboard Traefik sur `https://traefik.facturation.test`.
+Ouvrir `https://app.facturation.test:8443`. Le navigateur affichera probablement un avertissement car le certificat est auto-signé. L'interface LLDAP est sur `https://admin.facturation.test:8443` et le dashboard Traefik sur `https://traefik.facturation.test:8443`.
 
-Dans ce mode, seuls les ports Traefik `80` et `443` sont publiés. Les services métier restent internes aux réseaux Docker; les appels métier passent par Traefik avec le pattern `/api/:service/...`.
+Dans ce mode local, seuls les ports Traefik `8080` et `8443` sont publiés sur l'hôte. Les services métier restent internes aux réseaux Docker; les appels métier passent par Traefik avec le pattern `/api/:service/...`.
 
 ## Lancer un seul service
 

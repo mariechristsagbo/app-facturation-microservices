@@ -1,3 +1,200 @@
+http:
+  routers:
+    authelia:
+      rule: Host(`app.facturation.test`) && PathPrefix(`/auth`)
+      entryPoints:
+        - websecure
+      tls: {}
+      priority: 200
+      service: authelia
+
+    frontend:
+      rule: Host(`app.facturation.test`)
+      entryPoints:
+        - websecure
+      tls: {}
+      priority: 1
+      middlewares:
+        - authelia
+      service: frontend
+
+    traefik-dashboard:
+      rule: Host(`traefik.facturation.test`)
+      entryPoints:
+        - websecure
+      tls: {}
+      middlewares:
+        - authelia
+      service: api@internal
+
+    lldap:
+      rule: Host(`admin.facturation.test`)
+      entryPoints:
+        - websecure
+      tls: {}
+      middlewares:
+        - authelia
+      service: lldap
+
+    client-api:
+      rule: Host(`app.facturation.test`) && PathPrefix(`/api/client`)
+      entryPoints:
+        - websecure
+      tls: {}
+      priority: 100
+      middlewares:
+        - authelia
+        - client-strip
+      service: client-api
+
+    produit-api:
+      rule: Host(`app.facturation.test`) && PathPrefix(`/api/produit`)
+      entryPoints:
+        - websecure
+      tls: {}
+      priority: 100
+      middlewares:
+        - authelia
+        - produit-strip
+      service: produit-api
+
+    commande-api:
+      rule: Host(`app.facturation.test`) && PathPrefix(`/api/commande`)
+      entryPoints:
+        - websecure
+      tls: {}
+      priority: 100
+      middlewares:
+        - authelia
+        - commande-strip
+      service: commande-api
+
+    facture-api:
+      rule: Host(`app.facturation.test`) && PathPrefix(`/api/facture`)
+      entryPoints:
+        - websecure
+      tls: {}
+      priority: 100
+      middlewares:
+        - authelia
+        - facture-strip
+      service: facture-api
+
+    reglement-api:
+      rule: Host(`app.facturation.test`) && PathPrefix(`/api/reglement`)
+      entryPoints:
+        - websecure
+      tls: {}
+      priority: 100
+      middlewares:
+        - authelia
+        - reglement-strip
+      service: reglement-api
+
+    caisse-api:
+      rule: Host(`app.facturation.test`) && PathPrefix(`/api/caisse`)
+      entryPoints:
+        - websecure
+      tls: {}
+      priority: 100
+      middlewares:
+        - authelia
+        - caisse-strip
+      service: caisse-api
+
+    entrepot-api:
+      rule: Host(`app.facturation.test`) && PathPrefix(`/api/entrepot`)
+      entryPoints:
+        - websecure
+      tls: {}
+      priority: 100
+      middlewares:
+        - authelia
+        - entrepot-strip
+      service: entrepot-api
+
+  middlewares:
+    authelia:
+      forwardAuth:
+        address: http://authelia:9091/auth/api/authz/forward-auth
+        trustForwardHeader: true
+        authResponseHeaders:
+          - Remote-User
+          - Remote-Groups
+          - Remote-Name
+          - Remote-Email
+
+    client-strip:
+      stripPrefix:
+        prefixes:
+          - /api/client
+    produit-strip:
+      stripPrefix:
+        prefixes:
+          - /api/produit
+    commande-strip:
+      stripPrefix:
+        prefixes:
+          - /api/commande
+    facture-strip:
+      stripPrefix:
+        prefixes:
+          - /api/facture
+    reglement-strip:
+      stripPrefix:
+        prefixes:
+          - /api/reglement
+    caisse-strip:
+      stripPrefix:
+        prefixes:
+          - /api/caisse
+    entrepot-strip:
+      stripPrefix:
+        prefixes:
+          - /api/entrepot
+
+  services:
+    authelia:
+      loadBalancer:
+        servers:
+          - url: http://authelia:9091
+    frontend:
+      loadBalancer:
+        servers:
+          - url: http://frontend:5173
+    lldap:
+      loadBalancer:
+        servers:
+          - url: http://lldap:17170
+    client-api:
+      loadBalancer:
+        servers:
+          - url: http://client-service:3002
+    produit-api:
+      loadBalancer:
+        servers:
+          - url: http://product-service:3003
+    commande-api:
+      loadBalancer:
+        servers:
+          - url: http://order-service:3005
+    facture-api:
+      loadBalancer:
+        servers:
+          - url: http://invoice-service:3006
+    reglement-api:
+      loadBalancer:
+        servers:
+          - url: http://reglement-service:3007
+    caisse-api:
+      loadBalancer:
+        servers:
+          - url: http://cash-register-service:3008
+    entrepot-api:
+      loadBalancer:
+        servers:
+          - url: http://warehouse-service:3009
+
 tls:
   stores:
     default:

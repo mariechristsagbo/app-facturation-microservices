@@ -51,8 +51,8 @@ session:
   remember_me: 1M
   cookies:
     - domain: facturation.test
-      authelia_url: https://app.facturation.test/auth
-      default_redirection_url: https://app.facturation.test/
+      authelia_url: https://app.facturation.test:8443/auth
+      default_redirection_url: https://app.facturation.test:8443/
 
 regulation:
   max_retries: 5
