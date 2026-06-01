@@ -31,6 +31,67 @@ npm install
 npm start
 ```
 
+## Lancer le frontend en développement
+
+Le frontend React est une app métier CRUD. En développement, Vite sert uniquement l'interface; les appels API complets passent par la stack Docker décrite plus bas.
+
+```bash
+npm run dev:frontend
+```
+
+Le frontend React est disponible sur `http://localhost:5173`.
+
+Build du frontend:
+
+```bash
+npm run build:frontend
+```
+
+## Lancer la stack Traefik + Authelia + LLDAP
+
+Cette stack suit le schéma `Client -> Traefik -> Authelia -> LLDAP -> Microservices`. Traefik est l'API gateway publique; Authelia protège l'app et les routes API; LLDAP sert d'annuaire utilisateurs.
+
+Les fichiers Compose actifs sont à la racine: `docker-compose.yml`, `docker-compose.auth.yml`, `docker-compose.frontend.yml` et `docker-compose.microservices.yml`.
+
+Ajouter les domaines locaux dans `/etc/hosts`:
+
+```text
+127.0.0.1 app.facturation.test
+127.0.0.1 admin.facturation.test
+127.0.0.1 traefik.facturation.test
+```
+
+Créer le réseau Docker partagé par Traefik et les services:
+
+```bash
+docker network create proxy
+```
+
+Créer les variables et secrets locaux:
+
+```bash
+cp .env.auth.example .env.auth
+```
+
+Remplacer les secrets de `.env.auth` avec `openssl rand -hex 32`. L'utilisateur LLDAP de démonstration est `admin` avec le mot de passe `admin123`.
+
+Générer le certificat TLS local:
+
+```bash
+npm run auth:certs
+```
+
+Vérifier puis lancer la stack Docker:
+
+```bash
+npm run auth:config
+npm run auth:up
+```
+
+Ouvrir `https://app.facturation.test`. Le navigateur affichera probablement un avertissement car le certificat est auto-signé. L'interface LLDAP est sur `https://admin.facturation.test` et le dashboard Traefik sur `https://traefik.facturation.test`.
+
+Dans ce mode, seuls les ports Traefik `80` et `443` sont publiés. Les services métier restent internes aux réseaux Docker; les appels métier passent par Traefik avec le pattern `/api/:service/...`.
+
 ## Lancer un seul service
 
 ```bash
@@ -57,6 +118,18 @@ Tous les services métier suivent le même pattern:
 | Supprimer | `DELETE` | `/delete/:id` |
 
 `auth-service` expose aussi `POST /login` pour la connexion.
+
+Dans la stack Docker sécurisée, Traefik expose ces endpoints avec un préfixe service:
+
+| Service | Exemple |
+| --- | --- |
+| `client` | `/api/client/list` |
+| `produit` | `/api/produit/list` |
+| `commande` | `/api/commande/list` |
+| `facture` | `/api/facture/list` |
+| `reglement` | `/api/reglement/list` |
+| `caisse` | `/api/caisse/list` |
+| `entrepot` | `/api/entrepot/list` |
 
 ## Test rapide avec curl
 

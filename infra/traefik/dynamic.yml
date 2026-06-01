@@ -1,0 +1,9 @@
+tls:
+  stores:
+    default:
+      defaultCertificate:
+        certFile: /certs/facturation.test.crt
+        keyFile: /certs/facturation.test.key
+  certificates:
+    - certFile: /certs/facturation.test.crt
+      keyFile: /certs/facturation.test.key

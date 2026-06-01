@@ -1,0 +1,15 @@
+node_modules
+apps/frontend/dist
+services/*/data
+Microservices-data
+.env
+.env.auth
+.git
+.DS_Store
+*.log
+infra/authelia/db.sqlite3
+infra/authelia/notification.txt
+infra/authelia/notifications.txt
+infra/traefik/certs/*.crt
+infra/traefik/certs/*.key
+infra/traefik/certs/*.pem

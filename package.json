@@ -3,8 +3,19 @@
   "version": "1.0.0",
   "private": true,
   "type": "module",
+  "workspaces": [
+    "apps/frontend"
+  ],
   "scripts": {
     "start": "node --env-file=.env scripts/start-all.js",
+    "dev:frontend": "npm --workspace apps/frontend run dev",
+    "start:frontend": "npm --workspace apps/frontend run start",
+    "build:frontend": "npm --workspace apps/frontend run build",
+    "preview:frontend": "npm --workspace apps/frontend run preview",
+    "auth:certs": "sh infra/traefik/certs/generate-local-certs.sh",
+    "auth:config": "docker compose --env-file .env.auth -f docker-compose.yml -f docker-compose.auth.yml -f docker-compose.frontend.yml -f docker-compose.microservices.yml config",
+    "auth:up": "docker compose --env-file .env.auth -f docker-compose.yml -f docker-compose.auth.yml -f docker-compose.frontend.yml -f docker-compose.microservices.yml up --build",
+    "auth:down": "docker compose --env-file .env.auth -f docker-compose.yml -f docker-compose.auth.yml -f docker-compose.frontend.yml -f docker-compose.microservices.yml down",
     "start:auth": "node --env-file=.env services/auth-service/server.js",
     "start:clients": "node --env-file=.env services/client-service/server.js",
     "start:produits": "node --env-file=.env services/product-service/server.js",

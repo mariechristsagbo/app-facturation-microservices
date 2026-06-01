@@ -1,0 +1,188 @@
+x-service-build: &service-build
+  build:
+    context: .
+    dockerfile: Dockerfile.service
+  restart: unless-stopped
+
+x-api-router: &api-router
+  traefik.enable: "true"
+  traefik.docker.network: proxy
+
+services:
+  auth-service:
+    <<: *service-build
+    container_name: facturation-auth-service
+    command: node services/auth-service/server.js
+    volumes:
+      - ./services/auth-service/data:/app/services/auth-service/data
+    networks:
+      - facturation-backend
+
+  client-service:
+    <<: *service-build
+    container_name: facturation-client-service
+    command: node services/client-service/server.js
+    volumes:
+      - ./services/client-service/data:/app/services/client-service/data
+    networks:
+      - proxy
+      - facturation-backend
+    labels:
+      <<: *api-router
+      traefik.http.routers.client-api.rule: Host(`${HOST}`) && PathPrefix(`/api/client`)
+      traefik.http.routers.client-api.entrypoints: websecure
+      traefik.http.routers.client-api.tls: "true"
+      traefik.http.routers.client-api.priority: "100"
+      traefik.http.routers.client-api.middlewares: authelia@docker,client-strip
+      traefik.http.routers.client-api.service: client-api
+      traefik.http.middlewares.client-strip.stripprefix.prefixes: /api/client
+      traefik.http.services.client-api.loadbalancer.server.port: "3002"
+
+  product-service:
+    <<: *service-build
+    container_name: facturation-product-service
+    command: node services/product-service/server.js
+    volumes:
+      - ./services/product-service/data:/app/services/product-service/data
+    networks:
+      - proxy
+      - facturation-backend
+    labels:
+      <<: *api-router
+      traefik.http.routers.produit-api.rule: Host(`${HOST}`) && PathPrefix(`/api/produit`)
+      traefik.http.routers.produit-api.entrypoints: websecure
+      traefik.http.routers.produit-api.tls: "true"
+      traefik.http.routers.produit-api.priority: "100"
+      traefik.http.routers.produit-api.middlewares: authelia@docker,produit-strip
+      traefik.http.routers.produit-api.service: produit-api
+      traefik.http.middlewares.produit-strip.stripprefix.prefixes: /api/produit
+      traefik.http.services.produit-api.loadbalancer.server.port: "3003"
+
+  stock-service:
+    <<: *service-build
+    container_name: facturation-stock-service
+    command: node services/stock-service/server.js
+    volumes:
+      - ./services/stock-service/data:/app/services/stock-service/data
+    networks:
+      - facturation-backend
+
+  order-service:
+    <<: *service-build
+    container_name: facturation-order-service
+    command: node services/order-service/server.js
+    environment:
+      CLIENT_SERVICE_URL: http://client-service:3002
+      PRODUCT_SERVICE_URL: http://product-service:3003
+    depends_on:
+      - client-service
+      - product-service
+    volumes:
+      - ./services/order-service/data:/app/services/order-service/data
+    networks:
+      - proxy
+      - facturation-backend
+    labels:
+      <<: *api-router
+      traefik.http.routers.commande-api.rule: Host(`${HOST}`) && PathPrefix(`/api/commande`)
+      traefik.http.routers.commande-api.entrypoints: websecure
+      traefik.http.routers.commande-api.tls: "true"
+      traefik.http.routers.commande-api.priority: "100"
+      traefik.http.routers.commande-api.middlewares: authelia@docker,commande-strip
+      traefik.http.routers.commande-api.service: commande-api
+      traefik.http.middlewares.commande-strip.stripprefix.prefixes: /api/commande
+      traefik.http.services.commande-api.loadbalancer.server.port: "3005"
+
+  invoice-service:
+    <<: *service-build
+    container_name: facturation-invoice-service
+    command: node services/invoice-service/server.js
+    environment:
+      ORDER_SERVICE_URL: http://order-service:3005
+    depends_on:
+      - order-service
+    volumes:
+      - ./services/invoice-service/data:/app/services/invoice-service/data
+    networks:
+      - proxy
+      - facturation-backend
+    labels:
+      <<: *api-router
+      traefik.http.routers.facture-api.rule: Host(`${HOST}`) && PathPrefix(`/api/facture`)
+      traefik.http.routers.facture-api.entrypoints: websecure
+      traefik.http.routers.facture-api.tls: "true"
+      traefik.http.routers.facture-api.priority: "100"
+      traefik.http.routers.facture-api.middlewares: authelia@docker,facture-strip
+      traefik.http.routers.facture-api.service: facture-api
+      traefik.http.middlewares.facture-strip.stripprefix.prefixes: /api/facture
+      traefik.http.services.facture-api.loadbalancer.server.port: "3006"
+
+  reglement-service:
+    <<: *service-build
+    container_name: facturation-reglement-service
+    command: node services/reglement-service/server.js
+    environment:
+      INVOICE_SERVICE_URL: http://invoice-service:3006
+    depends_on:
+      - invoice-service
+    volumes:
+      - ./services/reglement-service/data:/app/services/reglement-service/data
+    networks:
+      - proxy
+      - facturation-backend
+    labels:
+      <<: *api-router
+      traefik.http.routers.reglement-api.rule: Host(`${HOST}`) && PathPrefix(`/api/reglement`)
+      traefik.http.routers.reglement-api.entrypoints: websecure
+      traefik.http.routers.reglement-api.tls: "true"
+      traefik.http.routers.reglement-api.priority: "100"
+      traefik.http.routers.reglement-api.middlewares: authelia@docker,reglement-strip
+      traefik.http.routers.reglement-api.service: reglement-api
+      traefik.http.middlewares.reglement-strip.stripprefix.prefixes: /api/reglement
+      traefik.http.services.reglement-api.loadbalancer.server.port: "3007"
+
+  cash-register-service:
+    <<: *service-build
+    container_name: facturation-cash-register-service
+    command: node services/cash-register-service/server.js
+    volumes:
+      - ./services/cash-register-service/data:/app/services/cash-register-service/data
+    networks:
+      - proxy
+      - facturation-backend
+    labels:
+      <<: *api-router
+      traefik.http.routers.caisse-api.rule: Host(`${HOST}`) && PathPrefix(`/api/caisse`)
+      traefik.http.routers.caisse-api.entrypoints: websecure
+      traefik.http.routers.caisse-api.tls: "true"
+      traefik.http.routers.caisse-api.priority: "100"
+      traefik.http.routers.caisse-api.middlewares: authelia@docker,caisse-strip
+      traefik.http.routers.caisse-api.service: caisse-api
+      traefik.http.middlewares.caisse-strip.stripprefix.prefixes: /api/caisse
+      traefik.http.services.caisse-api.loadbalancer.server.port: "3008"
+
+  warehouse-service:
+    <<: *service-build
+    container_name: facturation-warehouse-service
+    command: node services/warehouse-service/server.js
+    volumes:
+      - ./services/warehouse-service/data:/app/services/warehouse-service/data
+    networks:
+      - proxy
+      - facturation-backend
+    labels:
+      <<: *api-router
+      traefik.http.routers.entrepot-api.rule: Host(`${HOST}`) && PathPrefix(`/api/entrepot`)
+      traefik.http.routers.entrepot-api.entrypoints: websecure
+      traefik.http.routers.entrepot-api.tls: "true"
+      traefik.http.routers.entrepot-api.priority: "100"
+      traefik.http.routers.entrepot-api.middlewares: authelia@docker,entrepot-strip
+      traefik.http.routers.entrepot-api.service: entrepot-api
+      traefik.http.middlewares.entrepot-strip.stripprefix.prefixes: /api/entrepot
+      traefik.http.services.entrepot-api.loadbalancer.server.port: "3009"
+
+networks:
+  proxy:
+    external: true
+  facturation-backend:
+    driver: bridge

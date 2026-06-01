@@ -1,5 +1,15 @@
 node_modules/
+Microservices-data/
 services/*/data/
+apps/frontend/dist/
+infra/traefik/certs/*.crt
+infra/traefik/certs/*.key
+infra/traefik/certs/*.pem
+infra/traefik/certs/.openssl.local.cnf
+infra/authelia/db.sqlite3
+infra/authelia/notification.txt
+infra/authelia/notifications.txt
 .DS_Store
 *.log
 .env
+.env.auth
