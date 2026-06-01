@@ -92,6 +92,11 @@ Ouvrir `https://app.facturation.test:8443`. Le navigateur affichera probablement
 
 Dans ce mode local, seuls les ports Traefik `8080` et `8443` sont publiés sur l'hôte. Les services métier restent internes aux réseaux Docker; les appels métier passent par Traefik avec le pattern `/api/:service/...`.
 
+
+<img width="2940" height="1608" alt="image" src="https://github.com/user-attachments/assets/9f9124f0-f948-419a-8d76-25b3737270a1" />
+
+
+
 ## Lancer un seul service
 
 ```bash
