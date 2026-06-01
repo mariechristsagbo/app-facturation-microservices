@@ -41,9 +41,9 @@ Flux principal:
 
 ## Captures
 
-### Interface métier
+### Architecture microservice
 
-<img width="1664" height="820" alt="Interface métier facturation" src="https://github.com/user-attachments/assets/cbd69bc7-6a87-45bd-8f6f-5235da34fdc7" />
+<img width="1664" height="820" alt="architecture" src="https://github.com/user-attachments/assets/cbd69bc7-6a87-45bd-8f6f-5235da34fdc7" />
 
 ### Dashboard Traefik
 
