@@ -24,5 +24,4 @@ COPY --from=builder /app/apps/frontend/dist apps/frontend/dist
 COPY --from=builder /app/apps/frontend/server.js apps/frontend/server.js
 WORKDIR /app/apps/frontend
 
-EXPOSE 5173
 CMD ["npm", "run", "start"]
