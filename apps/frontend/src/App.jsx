@@ -7,6 +7,7 @@ import {
   CircleDollarSign,
   FileText,
   LayoutDashboard,
+  LogOut,
   Package,
   Plus,
   ReceiptText,
@@ -170,10 +171,20 @@ export default function App() {
         </div>
         <div className="flex min-h-16 min-w-72 items-center gap-3 rounded-lg border border-teal-200 bg-teal-50 px-4 text-teal-900 max-md:min-w-0">
           <ShieldCheck className="shrink-0" size={20} />
-          <div className="grid min-w-0 gap-0.5">
+          <div className="grid min-w-0 flex-1 gap-0.5">
             <span className="truncate text-sm font-bold">{sessionLabel}</span>
             <small className="truncate text-xs font-medium text-teal-700">{sessionDetail}</small>
           </div>
+          {me?.authenticated ? (
+            <a
+              aria-label="Se déconnecter"
+              className="inline-flex size-9 shrink-0 items-center justify-center rounded-md border border-teal-300 bg-white text-teal-800 transition hover:border-teal-500 hover:bg-teal-100"
+              href="/auth/logout"
+              title="Se déconnecter"
+            >
+              <LogOut size={16} />
+            </a>
+          ) : null}
         </div>
       </header>
 
