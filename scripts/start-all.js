@@ -1,10 +1,8 @@
 import { spawn } from 'node:child_process';
 
 const services = [
-  ['auth-service', 'services/auth-service/server.js'],
   ['client-service', 'services/client-service/server.js'],
   ['product-service', 'services/product-service/server.js'],
-  ['stock-service', 'services/stock-service/server.js'],
   ['order-service', 'services/order-service/server.js'],
   ['invoice-service', 'services/invoice-service/server.js'],
   ['reglement-service', 'services/reglement-service/server.js'],

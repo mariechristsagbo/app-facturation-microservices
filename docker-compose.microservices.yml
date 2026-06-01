@@ -5,15 +5,6 @@ x-service-build: &service-build
   restart: unless-stopped
 
 services:
-  auth-service:
-    <<: *service-build
-    container_name: facturation-auth-service
-    command: node services/auth-service/server.js
-    volumes:
-      - ./services/auth-service/data:/app/services/auth-service/data
-    networks:
-      - facturation-backend
-
   client-service:
     <<: *service-build
     container_name: facturation-client-service
@@ -32,15 +23,6 @@ services:
       - ./services/product-service/data:/app/services/product-service/data
     networks:
       - proxy
-      - facturation-backend
-
-  stock-service:
-    <<: *service-build
-    container_name: facturation-stock-service
-    command: node services/stock-service/server.js
-    volumes:
-      - ./services/stock-service/data:/app/services/stock-service/data
-    networks:
       - facturation-backend
 
   order-service:

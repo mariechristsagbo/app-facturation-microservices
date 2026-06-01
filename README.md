@@ -9,10 +9,8 @@ Mini-projet Node.js/Express pour le cours de microservices. Chaque dossier dans 
 
 | Service | Port | Rôle |
 | --- | --- | --- |
-| `auth-service` | `3001` | Gestion des utilisateurs et login |
 | `client-service` | `3002` | Gestion des clients |
 | `product-service` | `3003` | Gestion des produits |
-| `stock-service` | `3004` | Gestion des stocks |
 | `order-service` | `3005` | Gestion des commandes |
 | `invoice-service` | `3006` | Gestion des factures |
 | `reglement-service` | `3007` | Gestion des règlements |
@@ -97,7 +95,6 @@ Dans ce mode local, seuls les ports Traefik `8080` et `8443` sont publiés sur l
 ```bash
 npm run start:clients
 npm run start:produits
-npm run start:stock
 npm run start:commandes
 npm run start:factures
 npm run start:reglements
@@ -117,8 +114,6 @@ Tous les services métier suivent le même pattern:
 | Modifier | `PATCH` | `/edit/:id` |
 | Supprimer | `DELETE` | `/delete/:id` |
 
-`auth-service` expose aussi `POST /login` pour la connexion.
-
 Dans la stack Docker sécurisée, Traefik expose ces endpoints avec un préfixe service:
 
 | Service | Exemple |
@@ -132,14 +127,6 @@ Dans la stack Docker sécurisée, Traefik expose ces endpoints avec un préfixe 
 | `entrepot` | `/api/entrepot/list` |
 
 ## Test rapide avec curl
-
-Login:
-
-```bash
-curl -X POST http://localhost:3001/login \
-  -H "Content-Type: application/json" \
-  -d '{"email":"admin@facturation.test","password":"admin123"}'
-```
 
 Créer un client:
 
