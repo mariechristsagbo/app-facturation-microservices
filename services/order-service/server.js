@@ -1,45 +1,15 @@
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { formatDate, formatId, nextNumericId } from '../../shared/api-format.js';
+import { formatDate } from '../../shared/format-date.js';
 import { requireEnv } from '../../shared/env.js';
 import { asyncRoute, createServiceApp, httpError, listen, registerCommonHandlers, requireFields } from '../../shared/express.js';
 import { getJson } from '../../shared/http.js';
-import { JsonStore } from '../../shared/store.js';
+import { sqliteFilePath } from '../../shared/sqlite.js';
+import { createOrderStore } from './store.js';
 
 const serviceName = 'order-service';
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const orders = new JsonStore(path.join(__dirname, 'data', 'orders.json'), [
-  {
-    id: 1,
-    client_id: 1,
-    date: '2026-05-10',
-    total: 455000,
-    statut: 'validée',
-    lignes: [
-      { produit_id: 1, quantite: 1, prix: 450000 },
-      { produit_id: 3, quantite: 1, prix: 5000 }
-    ],
-    createdAt: '2026-05-10T00:00:00.000Z'
-  },
-  {
-    id: 2,
-    client_id: 2,
-    date: '2026-05-12',
-    total: 120000,
-    statut: 'validée',
-    lignes: [{ produit_id: 2, quantite: 1, prix: 120000 }],
-    createdAt: '2026-05-12T00:00:00.000Z'
-  },
-  {
-    id: 3,
-    client_id: 3,
-    date: '2026-05-15',
-    total: 13000,
-    statut: 'validée',
-    lignes: [{ produit_id: 3, quantite: 2, prix: 6500 }],
-    createdAt: '2026-05-15T00:00:00.000Z'
-  }
-]);
+const orders = createOrderStore(sqliteFilePath(__dirname, 'orders.sqlite'));
 
 const CLIENT_SERVICE_URL = requireEnv('CLIENT_SERVICE_URL');
 const PRODUCT_SERVICE_URL = requireEnv('PRODUCT_SERVICE_URL');
@@ -166,19 +136,19 @@ async function createOrder(body, options = {}) {
     }
 
     lines.push({
-      produit_id: formatId(product.id ?? productId),
+      produit_id: Number(product.id ?? productId),
       quantite: quantity,
       prix: unitPrice
     });
   }
 
   const total = lines.reduce((sum, line) => sum + line.prix * line.quantite, 0);
-  const orderId = nextNumericId(await orders.all());
+  const orderId = await orders.nextNumericId();
   const date = body.date || formatDate();
 
   return orders.create({
     id: orderId,
-    client_id: formatId(client.id ?? clientId),
+    client_id: Number(client.id ?? clientId),
     date,
     total,
     statut: body.statut || 'validée',
@@ -199,7 +169,7 @@ async function getProduct(productId) {
 
 function formatOrderSummary(order) {
   return {
-    id: formatId(order.id),
+    id: order.id,
     client_id: getClientId(order),
     date: order.date || formatDate(order.createdAt),
     total: order.total
@@ -215,12 +185,12 @@ function formatOrderDetails(order) {
 }
 
 function getClientId(order) {
-  return formatId(order.client_id);
+  return order.client_id;
 }
 
 function getOrderLines(order) {
   return order.lignes.map((line) => ({
-    produit_id: formatId(line.produit_id),
+    produit_id: line.produit_id,
     quantite: line.quantite,
     prix: line.prix
   }));

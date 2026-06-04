@@ -8,6 +8,7 @@
   ],
   "scripts": {
     "start": "node --env-file=.env scripts/start-all.js",
+    "test": "node --test",
     "dev:frontend": "npm --workspace apps/frontend run dev",
     "start:frontend": "npm --workspace apps/frontend run start",
     "build:frontend": "npm --workspace apps/frontend run build",

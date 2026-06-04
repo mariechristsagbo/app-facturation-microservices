@@ -1,6 +1,8 @@
 node_modules/
 Microservices-data/
-services/*/data/
+services/*/data/*
+!services/*/data/
+!services/*/data/*.sqlite
 apps/frontend/dist/
 infra/traefik/certs/*.crt
 infra/traefik/certs/*.key

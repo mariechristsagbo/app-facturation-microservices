@@ -1,37 +1,14 @@
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { formatId, nextNumericId } from '../../shared/api-format.js';
 import { asyncRoute, createServiceApp, httpError, listen, registerCommonHandlers, requireFields } from '../../shared/express.js';
-import { JsonStore } from '../../shared/store.js';
+import { SqliteStore, sqliteFilePath } from '../../shared/sqlite.js';
 
 const serviceName = 'cash-register-service';
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const cashRegisters = new JsonStore(path.join(__dirname, 'data', 'cash-registers.json'), [
-  {
-    id: 1,
-    libelle: 'Caisse principale',
-    solde: 1500000,
-    devise: 'XOF',
-    responsable: 'Awa Diop',
-    createdAt: '2026-05-10T00:00:00.000Z'
-  },
-  {
-    id: 2,
-    libelle: 'Caisse secondaire',
-    solde: 350000,
-    devise: 'XOF',
-    responsable: 'Moussa Ndiaye',
-    createdAt: '2026-05-12T00:00:00.000Z'
-  },
-  {
-    id: 3,
-    libelle: 'Caisse mobile',
-    solde: 75000,
-    devise: 'XOF',
-    responsable: 'Fatou Fall',
-    createdAt: '2026-05-15T00:00:00.000Z'
-  }
-]);
+const cashRegisters = new SqliteStore(sqliteFilePath(__dirname, 'cash-registers.sqlite'), {
+  tableName: 'cash_registers',
+  columns: ['id', 'libelle', 'solde', 'devise', 'responsable', 'createdAt']
+});
 
 const app = createServiceApp(serviceName);
 
@@ -39,7 +16,7 @@ app.post('/create', asyncRoute(async (req, res) => {
   requireFields(req.body, ['libelle']);
 
   const cashRegister = await cashRegisters.create({
-    id: nextNumericId(await cashRegisters.all()),
+    id: await cashRegisters.nextNumericId(),
     libelle: req.body.libelle,
     solde: req.body.solde === undefined ? 0 : Number(req.body.solde),
     devise: req.body.devise || 'XOF',
@@ -124,7 +101,7 @@ listen(app, serviceName, 3008);
 
 function formatCashRegisterSummary(cashRegister) {
   return {
-    id: formatId(cashRegister.id),
+    id: cashRegister.id,
     libelle: cashRegister.libelle,
     solde: cashRegister.solde
   };

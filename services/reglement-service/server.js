@@ -1,42 +1,17 @@
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { formatDate, formatId, nextNumericId } from '../../shared/api-format.js';
+import { formatDate } from '../../shared/format-date.js';
 import { requireEnv } from '../../shared/env.js';
 import { asyncRoute, createServiceApp, httpError, listen, registerCommonHandlers, requireFields } from '../../shared/express.js';
 import { getJson, sendJson } from '../../shared/http.js';
-import { JsonStore } from '../../shared/store.js';
+import { SqliteStore, sqliteFilePath } from '../../shared/sqlite.js';
 
 const serviceName = 'reglement-service';
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const payments = new JsonStore(path.join(__dirname, 'data', 'payments.json'), [
-  {
-    id: 1,
-    facture_id: 1,
-    montant: 455000,
-    mode: 'espèces',
-    date: '2026-05-10',
-    caisse_id: 1,
-    createdAt: '2026-05-10T00:00:00.000Z'
-  },
-  {
-    id: 2,
-    facture_id: 2,
-    montant: 120000,
-    mode: 'virement',
-    date: '2026-05-12',
-    caisse_id: 1,
-    createdAt: '2026-05-12T00:00:00.000Z'
-  },
-  {
-    id: 3,
-    facture_id: 3,
-    montant: 13000,
-    mode: 'mobile money',
-    date: '2026-05-15',
-    caisse_id: 3,
-    createdAt: '2026-05-15T00:00:00.000Z'
-  }
-]);
+const payments = new SqliteStore(sqliteFilePath(__dirname, 'payments.sqlite'), {
+  tableName: 'payments',
+  columns: ['id', 'facture_id', 'montant', 'mode', 'date', 'caisse_id', 'reference', 'createdAt']
+});
 
 const INVOICE_SERVICE_URL = requireEnv('INVOICE_SERVICE_URL');
 
@@ -140,8 +115,8 @@ async function createPayment(body) {
 
   const date = body.date || formatDate();
   const payment = await payments.create({
-    id: nextNumericId(await payments.all()),
-    facture_id: formatId(invoice.id ?? invoiceId),
+    id: await payments.nextNumericId(),
+    facture_id: Number(invoice.id ?? invoiceId),
     montant: amount,
     mode: body.mode,
     date,
@@ -188,7 +163,7 @@ function getRemainingAmount(invoice, data) {
 
 function formatPaymentSummary(payment) {
   return {
-    id: formatId(payment.id),
+    id: payment.id,
     facture_id: getInvoiceId(payment),
     montant: payment.montant,
     mode: payment.mode
@@ -204,5 +179,5 @@ function formatPaymentDetails(payment) {
 }
 
 function getInvoiceId(payment) {
-  return formatId(payment.facture_id);
+  return payment.facture_id;
 }

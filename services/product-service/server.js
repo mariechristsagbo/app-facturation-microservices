@@ -1,44 +1,21 @@
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { formatId, nextNumericId } from '../../shared/api-format.js';
 import { asyncRoute, createServiceApp, httpError, listen, registerCommonHandlers, requireFields } from '../../shared/express.js';
-import { JsonStore } from '../../shared/store.js';
+import { SqliteStore, sqliteFilePath } from '../../shared/sqlite.js';
 
 const serviceName = 'product-service';
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const products = new JsonStore(path.join(__dirname, 'data', 'products.json'), [
-  {
-    id: 1,
-    nom: 'Ordinateur portable',
-    reference: 'PRD-001',
-    categorie: 'Informatique',
-    prix: 450000,
-    createdAt: '2026-05-10T00:00:00.000Z'
-  },
-  {
-    id: 2,
-    nom: 'Imprimante',
-    reference: 'PRD-002',
-    categorie: 'Informatique',
-    prix: 120000,
-    createdAt: '2026-05-12T00:00:00.000Z'
-  },
-  {
-    id: 3,
-    nom: 'Clé USB 32Go',
-    reference: 'PRD-003',
-    categorie: 'Informatique',
-    prix: 5000,
-    createdAt: '2026-05-15T00:00:00.000Z'
-  }
-]);
+const products = new SqliteStore(sqliteFilePath(__dirname, 'products.sqlite'), {
+  tableName: 'products',
+  columns: ['id', 'nom', 'reference', 'categorie', 'prix', 'createdAt']
+});
 
 const app = createServiceApp(serviceName);
 
 app.post('/create', asyncRoute(async (req, res) => {
   requireFields(req.body, ['nom', 'prix']);
 
-  const productId = nextNumericId(await products.all());
+  const productId = await products.nextNumericId();
 
   const product = await products.create({
     id: productId,
@@ -126,7 +103,7 @@ listen(app, serviceName, 3003);
 
 function formatProductSummary(product) {
   return {
-    id: formatId(product.id),
+    id: product.id,
     nom: product.nom,
     prix: product.prix
   };

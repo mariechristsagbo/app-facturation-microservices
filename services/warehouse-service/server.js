@@ -1,37 +1,14 @@
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { formatId, nextNumericId } from '../../shared/api-format.js';
 import { asyncRoute, createServiceApp, httpError, listen, registerCommonHandlers, requireFields } from '../../shared/express.js';
-import { JsonStore } from '../../shared/store.js';
+import { SqliteStore, sqliteFilePath } from '../../shared/sqlite.js';
 
 const serviceName = 'warehouse-service';
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const warehouses = new JsonStore(path.join(__dirname, 'data', 'warehouses.json'), [
-  {
-    id: 1,
-    nom: 'Entrepôt Dakar',
-    ville: 'Dakar',
-    adresse: 'Zone industrielle, Dakar',
-    capacite: 5000,
-    createdAt: '2026-05-10T00:00:00.000Z'
-  },
-  {
-    id: 2,
-    nom: 'Entrepôt Thiès',
-    ville: 'Thiès',
-    adresse: 'Zone industrielle, Thiès',
-    capacite: 3000,
-    createdAt: '2026-05-12T00:00:00.000Z'
-  },
-  {
-    id: 3,
-    nom: 'Entrepôt Saint-Louis',
-    ville: 'Saint-Louis',
-    adresse: 'Route nationale, Saint-Louis',
-    capacite: 2000,
-    createdAt: '2026-05-15T00:00:00.000Z'
-  }
-]);
+const warehouses = new SqliteStore(sqliteFilePath(__dirname, 'warehouses.sqlite'), {
+  tableName: 'warehouses',
+  columns: ['id', 'nom', 'ville', 'adresse', 'capacite', 'createdAt']
+});
 
 const app = createServiceApp(serviceName);
 
@@ -39,7 +16,7 @@ app.post('/create', asyncRoute(async (req, res) => {
   requireFields(req.body, ['nom', 'ville']);
 
   const warehouse = await warehouses.create({
-    id: nextNumericId(await warehouses.all()),
+    id: await warehouses.nextNumericId(),
     nom: req.body.nom,
     ville: req.body.ville,
     adresse: req.body.adresse || null,
@@ -124,7 +101,7 @@ listen(app, serviceName, 3009);
 
 function formatWarehouseSummary(warehouse) {
   return {
-    id: formatId(warehouse.id),
+    id: warehouse.id,
     nom: warehouse.nom,
     ville: warehouse.ville
   };

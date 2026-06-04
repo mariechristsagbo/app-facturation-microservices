@@ -1,40 +1,14 @@
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { formatId, nextNumericId } from '../../shared/api-format.js';
 import { asyncRoute, createServiceApp, httpError, listen, registerCommonHandlers, requireFields } from '../../shared/express.js';
-import { JsonStore } from '../../shared/store.js';
+import { SqliteStore, sqliteFilePath } from '../../shared/sqlite.js';
 
 const serviceName = 'client-service';
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const clients = new JsonStore(path.join(__dirname, 'data', 'clients.json'), [
-  {
-    id: 1,
-    nom: 'Diop',
-    prenom: 'Awa',
-    telephone: '771234567',
-    email: 'awa.diop@example.com',
-    adresse: 'Dakar',
-    createdAt: '2026-05-10T00:00:00.000Z'
-  },
-  {
-    id: 2,
-    nom: 'Ndiaye',
-    prenom: 'Moussa',
-    telephone: '772345678',
-    email: 'moussa.ndiaye@example.com',
-    adresse: 'Thiès',
-    createdAt: '2026-05-12T00:00:00.000Z'
-  },
-  {
-    id: 3,
-    nom: 'Fall',
-    prenom: 'Fatou',
-    telephone: '773456789',
-    email: 'fatou.fall@example.com',
-    adresse: 'Saint-Louis',
-    createdAt: '2026-05-15T00:00:00.000Z'
-  }
-]);
+const clients = new SqliteStore(sqliteFilePath(__dirname, 'clients.sqlite'), {
+  tableName: 'clients',
+  columns: ['id', 'nom', 'prenom', 'telephone', 'email', 'adresse', 'createdAt']
+});
 
 const app = createServiceApp(serviceName);
 
@@ -123,10 +97,8 @@ registerCommonHandlers(app, serviceName);
 listen(app, serviceName, 3002);
 
 async function createClient(body) {
-  const data = await clients.all();
-
   return clients.create({
-    id: nextNumericId(data),
+    id: await clients.nextNumericId(),
     nom: body.nom,
     prenom: body.prenom || null,
     telephone: body.telephone,
@@ -171,6 +143,5 @@ function formatClientDetails(client, index = 0) {
 }
 
 function getPublicId(record, index = 0) {
-  const id = formatId(record.id);
-  return typeof id === 'number' ? id : index + 1;
+  return Number.isInteger(record.id) ? record.id : index + 1;
 }

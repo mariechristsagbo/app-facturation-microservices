@@ -1,42 +1,17 @@
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { formatDate, formatId, nextNumericId } from '../../shared/api-format.js';
+import { formatDate } from '../../shared/format-date.js';
 import { requireEnv } from '../../shared/env.js';
 import { asyncRoute, createServiceApp, httpError, listen, registerCommonHandlers, requireFields } from '../../shared/express.js';
 import { getJson } from '../../shared/http.js';
-import { JsonStore } from '../../shared/store.js';
+import { SqliteStore, sqliteFilePath } from '../../shared/sqlite.js';
 
 const serviceName = 'invoice-service';
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const invoices = new JsonStore(path.join(__dirname, 'data', 'invoices.json'), [
-  {
-    id: 1,
-    commande_id: 1,
-    numero: 'FAC-2026-001',
-    date_emission: '2026-05-10',
-    montant: 455000,
-    statut: 'payée',
-    createdAt: '2026-05-10T00:00:00.000Z'
-  },
-  {
-    id: 2,
-    commande_id: 2,
-    numero: 'FAC-2026-002',
-    date_emission: '2026-05-12',
-    montant: 120000,
-    statut: 'payée',
-    createdAt: '2026-05-12T00:00:00.000Z'
-  },
-  {
-    id: 3,
-    commande_id: 3,
-    numero: 'FAC-2026-003',
-    date_emission: '2026-05-15',
-    montant: 13000,
-    statut: 'non payée',
-    createdAt: '2026-05-15T00:00:00.000Z'
-  }
-]);
+const invoices = new SqliteStore(sqliteFilePath(__dirname, 'invoices.sqlite'), {
+  tableName: 'invoices',
+  columns: ['id', 'commande_id', 'numero', 'date_emission', 'montant', 'statut', 'createdAt']
+});
 
 const ORDER_SERVICE_URL = requireEnv('ORDER_SERVICE_URL');
 
@@ -145,13 +120,13 @@ async function createInvoice(body, options = {}) {
   }
 
   const order = options.validateOrder ? await getOrder(orderId) : { id: orderId, total: amount ?? 0 };
-  const invoiceId = nextNumericId(await invoices.all());
+  const invoiceId = await invoices.nextNumericId();
   const date = body.date_emission || formatDate();
   const invoiceAmount = amount ?? order.total;
 
   return invoices.create({
     id: invoiceId,
-    commande_id: formatId(order.id ?? orderId),
+    commande_id: Number(order.id ?? orderId),
     numero: body.numero || formatInvoiceNumber(invoiceId, date),
     date_emission: date,
     montant: invoiceAmount,
@@ -167,7 +142,7 @@ async function getOrder(orderId) {
 
 function formatInvoiceSummary(invoice) {
   return {
-    id: formatId(invoice.id),
+    id: invoice.id,
     commande_id: getOrderId(invoice),
     numero: invoice.numero,
     montant: invoice.montant
@@ -176,7 +151,7 @@ function formatInvoiceSummary(invoice) {
 
 function formatInvoiceDetails(invoice) {
   return {
-    id: formatId(invoice.id),
+    id: invoice.id,
     commande_id: getOrderId(invoice),
     numero: invoice.numero,
     date_emission: invoice.date_emission || formatDate(invoice.createdAt),
@@ -190,7 +165,7 @@ function formatInvoiceNumber(id, date) {
 }
 
 function getOrderId(invoice) {
-  return formatId(invoice.commande_id);
+  return invoice.commande_id;
 }
 
 function validateInvoiceStatus(status) {
