@@ -4,13 +4,14 @@ import { formatDate } from '../../shared/format-date.js';
 import { requireEnv } from '../../shared/env.js';
 import { asyncRoute, createServiceApp, httpError, listen, registerCommonHandlers, requireFields } from '../../shared/express.js';
 import { getJson, sendJson } from '../../shared/http.js';
-import { SqliteStore, sqliteFilePath } from '../../shared/sqlite.js';
+import { readSqliteSchema, SqliteStore, sqliteFilePath } from '../../shared/sqlite.js';
 
 const serviceName = 'reglement-service';
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const payments = new SqliteStore(sqliteFilePath(__dirname, 'payments.sqlite'), {
   tableName: 'payments',
-  columns: ['id', 'facture_id', 'montant', 'mode', 'date', 'caisse_id', 'reference', 'createdAt']
+  columns: ['id', 'facture_id', 'montant', 'mode', 'date', 'caisse_id', 'reference', 'createdAt'],
+  schema: readSqliteSchema(__dirname)
 });
 
 const INVOICE_SERVICE_URL = requireEnv('INVOICE_SERVICE_URL');

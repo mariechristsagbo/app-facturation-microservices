@@ -4,12 +4,12 @@ import { formatDate } from '../../shared/format-date.js';
 import { requireEnv } from '../../shared/env.js';
 import { asyncRoute, createServiceApp, httpError, listen, registerCommonHandlers, requireFields } from '../../shared/express.js';
 import { getJson } from '../../shared/http.js';
-import { sqliteFilePath } from '../../shared/sqlite.js';
+import { readSqliteSchema, sqliteFilePath } from '../../shared/sqlite.js';
 import { createOrderStore } from './store.js';
 
 const serviceName = 'order-service';
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const orders = createOrderStore(sqliteFilePath(__dirname, 'orders.sqlite'));
+const orders = createOrderStore(sqliteFilePath(__dirname, 'orders.sqlite'), { schema: readSqliteSchema(__dirname) });
 
 const CLIENT_SERVICE_URL = requireEnv('CLIENT_SERVICE_URL');
 const PRODUCT_SERVICE_URL = requireEnv('PRODUCT_SERVICE_URL');
