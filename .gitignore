@@ -2,6 +2,7 @@ node_modules/
 Microservices-data/
 services/*/data/*
 !services/*/data/
+!services/*/data/.gitkeep
 *.sqlite
 *.sqlite-shm
 *.sqlite-wal
