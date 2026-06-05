@@ -17,17 +17,38 @@ export function valuesFromRecord(service, record) {
 
 export function toPayload(service, values, options = {}) {
   const payload = {};
+  const errors = [];
 
   for (const field of service.fields) {
     const value = values[field.name];
     if (value === '' || value === null || value === undefined) {
       if (!options.partial && field.required) {
-        payload[field.name] = value;
+        errors.push(`${field.label} est obligatoire`);
       }
       continue;
     }
 
-    payload[field.name] = field.type === 'number' ? Number(value) : value;
+    if (field.type === 'number') {
+      const numberValue = Number(value);
+      if (!Number.isFinite(numberValue)) {
+        errors.push(`${field.label} doit être un nombre valide`);
+        continue;
+      }
+
+      payload[field.name] = numberValue;
+      continue;
+    }
+
+    if (field.type === 'date' && !isValidDateInput(value)) {
+      errors.push(`${field.label} doit être une date valide`);
+      continue;
+    }
+
+    payload[field.name] = value;
+  }
+
+  if (errors.length > 0) {
+    throw new ValidationError(errors);
   }
 
   if (service.key === 'commande') {
@@ -39,4 +60,22 @@ export function toPayload(service, values, options = {}) {
   }
 
   return payload;
+}
+
+export class ValidationError extends Error {
+  constructor(errors) {
+    super(errors.join('. '));
+    this.name = 'ValidationError';
+    this.errors = errors;
+    this.payload = { ok: false, error: this.message, errors };
+  }
+}
+
+function isValidDateInput(value) {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(String(value))) {
+    return false;
+  }
+
+  const date = new Date(`${value}T00:00:00.000Z`);
+  return Number.isFinite(date.getTime()) && date.toISOString().slice(0, 10) === value;
 }
