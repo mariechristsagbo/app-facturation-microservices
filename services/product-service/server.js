@@ -1,13 +1,14 @@
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { asyncRoute, createServiceApp, httpError, listen, registerCommonHandlers, requireFields } from '../../shared/express.js';
-import { SqliteStore, sqliteFilePath } from '../../shared/sqlite.js';
+import { readSqliteSchema, SqliteStore, sqliteFilePath } from '../../shared/sqlite.js';
 
 const serviceName = 'product-service';
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const products = new SqliteStore(sqliteFilePath(__dirname, 'products.sqlite'), {
   tableName: 'products',
-  columns: ['id', 'nom', 'reference', 'categorie', 'prix', 'createdAt']
+  columns: ['id', 'nom', 'reference', 'categorie', 'prix', 'createdAt'],
+  schema: readSqliteSchema(__dirname)
 });
 
 const app = createServiceApp(serviceName);

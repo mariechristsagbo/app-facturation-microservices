@@ -1,7 +1,7 @@
 import { openSqliteDatabase, runTransaction, toPlainObject } from '../../shared/sqlite.js';
 
-export function createOrderStore(filePath) {
-  const db = openSqliteDatabase(filePath);
+export function createOrderStore(filePath, options = {}) {
+  const db = openSqliteDatabase(filePath, options.schema);
 
   return {
     async all() {

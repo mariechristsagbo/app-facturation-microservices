@@ -1,4 +1,4 @@
-import { existsSync } from 'node:fs';
+import { existsSync, mkdirSync, readFileSync } from 'node:fs';
 import path from 'node:path';
 import { DatabaseSync } from 'node:sqlite';
 
@@ -6,13 +6,23 @@ export function sqliteFilePath(serviceDir, filename) {
   return path.join(process.env.DATA_DIR || path.join(serviceDir, 'data'), filename);
 }
 
-export function openSqliteDatabase(filePath) {
-  if (!existsSync(filePath)) {
+export function readSqliteSchema(serviceDir, filename = 'schema.sql') {
+  return readFileSync(path.join(serviceDir, filename), 'utf8');
+}
+
+export function openSqliteDatabase(filePath, schema = null) {
+  if (!existsSync(filePath) && !schema) {
     throw new Error(`Base SQLite introuvable: ${filePath}`);
   }
 
+  mkdirSync(path.dirname(filePath), { recursive: true });
   const db = new DatabaseSync(filePath);
   db.exec('PRAGMA foreign_keys = ON');
+
+  if (schema) {
+    db.exec(schema);
+  }
+
   return db;
 }
 
@@ -31,7 +41,7 @@ export function runTransaction(db, callback) {
 
 export class SqliteStore {
   constructor(filePath, options) {
-    this.db = openSqliteDatabase(filePath);
+    this.db = openSqliteDatabase(filePath, options.schema);
     this.tableName = quoteIdentifier(options.tableName);
     this.columns = options.columns;
     this.columnList = this.columns.map(quoteIdentifier).join(', ');

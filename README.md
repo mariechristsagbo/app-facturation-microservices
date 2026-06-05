@@ -69,7 +69,7 @@ Flux principal:
 
 Dans la stack Docker, ces ports sont internes au réseau Docker. Le navigateur passe toujours par Traefik.
 
-Chaque microservice persiste ses données dans sa propre base SQLite locale sous `services/<service>/data/`. Les bases SQLite de départ sont vides, versionnées et livrées avec le dépôt.
+Chaque microservice persiste ses données dans sa propre base SQLite locale sous `services/<service>/data/`. Les schemas SQL sont versionnes avec le depot; les fichiers runtime `.sqlite` sont generes localement au demarrage et ignores par Git.
 
 ## Prérequis
 
@@ -326,5 +326,5 @@ Vérifier que la stack est lancée et que l'utilisateur connecté appartient au 
 
 ## Notes de projet
 
-- Les bases SQLite sous `services/*/data/` sont versionnées comme bases de départ; elles représentent aussi l'état runtime local en développement.
+- Les schemas SQL des services sont versionnes; les bases SQLite runtime sous `services/*/data/` restent locales et ignorees par Git.
 - Les certificats générés localement dans `infra/traefik/certs/` ne doivent pas être utilisés en production.
