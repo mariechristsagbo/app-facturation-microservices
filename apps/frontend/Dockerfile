@@ -22,6 +22,7 @@ RUN npm ci --omit=dev
 
 COPY --from=builder /app/apps/frontend/dist apps/frontend/dist
 COPY --from=builder /app/apps/frontend/server.js apps/frontend/server.js
+COPY --from=builder /app/apps/frontend/auth-headers.js apps/frontend/auth-headers.js
 WORKDIR /app/apps/frontend
 
 CMD ["npm", "run", "start"]
