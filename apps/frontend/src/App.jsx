@@ -16,7 +16,6 @@ import {
   PackageIcon,
   PlusSignIcon,
   Search01Icon,
-  SecurityCheckIcon,
   ShoppingCart01Icon,
   UserMultipleIcon,
   WarehouseIcon
@@ -43,16 +42,10 @@ import {
   AlertDialogMedia,
   AlertDialogTitle
 } from '@/components/ui/alert-dialog';
+import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import {
-  Card,
-  CardAction,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle
-} from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import {
   Dialog,
   DialogContent,
@@ -61,6 +54,14 @@ import {
   DialogHeader,
   DialogTitle
 } from '@/components/ui/dialog';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger
+} from '@/components/ui/dropdown-menu';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import {
@@ -271,18 +272,13 @@ export default function App() {
     toast.error(requestError.message || 'Erreur API', { description: title });
   }
 
-  const sessionLabel = me?.authenticated && me.user ? me.user.name : 'Session locale';
-  const sessionDetail = me?.authenticated && me.user
-    ? me.user.email || me.user.username
-    : 'Protégé par Authelia en mode Docker';
-
   return (
     <SidebarProvider>
       <DashboardSidebar rowsByService={rowsByService} />
 
       <SidebarInset className="bg-zinc-50">
-        <main className="mx-auto min-h-screen w-[min(1220px,calc(100vw-32px))] py-6 text-zinc-950 max-sm:w-[min(100vw-20px,760px)] max-sm:py-4">
-          <header className="mb-5 flex items-center justify-between gap-4 max-md:flex-col max-md:items-stretch">
+        <main className="mx-auto min-h-screen w-full max-w-6xl px-4 py-6 text-zinc-950 md:px-6 max-sm:py-4">
+          <header className="mb-5 flex items-center justify-between gap-4">
             <div className="flex min-w-0 items-center gap-3">
               <SidebarTrigger className="md:hidden" />
               <div className="min-w-0">
@@ -291,23 +287,7 @@ export default function App() {
               </div>
             </div>
 
-            <div className="flex min-h-14 min-w-72 items-center gap-3 rounded-lg border border-teal-200 bg-teal-50 px-4 text-teal-900 max-md:min-w-0">
-              <AppIcon className="shrink-0" icon={SecurityCheckIcon} size={20} />
-              <div className="grid min-w-0 flex-1 gap-0.5">
-                <span className="truncate text-sm font-bold">{sessionLabel}</span>
-                <small className="truncate text-xs font-medium text-teal-700">{sessionDetail}</small>
-              </div>
-              {me?.authenticated ? (
-                <a
-                  aria-label="Se déconnecter"
-                  className="inline-flex size-8 shrink-0 items-center justify-center rounded-md border border-teal-300 bg-white text-teal-800 transition hover:border-teal-500 hover:bg-teal-100"
-                  href="/auth/logout"
-                  title="Se déconnecter"
-                >
-                  <AppIcon icon={Logout01Icon} size={16} />
-                </a>
-              ) : null}
-            </div>
+            <UserMenu me={me} />
           </header>
 
           <Routes>
@@ -340,6 +320,55 @@ export default function App() {
       <Toaster closeButton position="top-right" richColors />
     </SidebarProvider>
   );
+}
+
+function UserMenu({ me }) {
+  const user = me?.authenticated ? me.user : null;
+  const sessionLabel = user?.name || user?.username || user?.email || 'Session locale';
+  const sessionDetail = user?.email || user?.username || 'Protégé par Authelia en mode Docker';
+
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button aria-label="Menu utilisateur" className="size-10 rounded-full p-0" size="icon-lg" type="button" variant="ghost">
+          <Avatar className="bg-teal-700 text-white" size="lg">
+            <AvatarFallback className="bg-teal-700 text-xs font-bold uppercase text-white">
+              {initialsFor(sessionLabel)}
+            </AvatarFallback>
+          </Avatar>
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end" className="min-w-64">
+        <DropdownMenuLabel className="grid gap-0.5 px-2 py-1.5 text-left">
+          <span className="truncate text-sm font-semibold text-zinc-950">{sessionLabel}</span>
+          <span className="truncate text-xs font-medium text-zinc-500">{sessionDetail}</span>
+        </DropdownMenuLabel>
+        {me?.authenticated ? (
+          <>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem asChild>
+              <a href="/auth/logout">
+                <AppIcon icon={Logout01Icon} size={14} />
+                Se déconnecter
+              </a>
+            </DropdownMenuItem>
+          </>
+        ) : null}
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
+}
+
+function initialsFor(value) {
+  const initials = String(value || '')
+    .trim()
+    .split(/\s+/)
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((part) => part[0])
+    .join('');
+
+  return (initials || 'A').toUpperCase();
 }
 
 function DashboardSidebar({ rowsByService }) {
@@ -499,25 +528,11 @@ function ModulePage({ busy, onCreate, onDelete, onEdit, onEnsureList, onView, ro
   }
 
   const visibleRows = table.getRowModel().rows;
-  const filteredCount = table.getFilteredRowModel().rows.length;
 
   return (
     <>
-      <Card className="shadow-sm">
-        <CardHeader className="border-b border-zinc-200">
-          <div className="min-w-0">
-            <CardTitle className="text-lg font-black text-zinc-950">{service.label}</CardTitle>
-            <CardDescription>{rows.length} enregistrements chargés</CardDescription>
-          </div>
-          <CardAction>
-            <Button disabled={busy} onClick={openCreateDialog} size="lg" type="button">
-              <AppIcon icon={PlusSignIcon} size={16} />
-              Ajouter
-            </Button>
-          </CardAction>
-        </CardHeader>
-
-        <CardContent className="grid gap-3 pt-4">
+      <Card className="rounded-none bg-transparent py-0 shadow-none ring-0">
+        <CardContent className="grid gap-3 p-0">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div className="relative w-full max-w-sm">
               <AppIcon className="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 text-zinc-500" icon={Search01Icon} size={15} />
@@ -528,12 +543,15 @@ function ModulePage({ busy, onCreate, onDelete, onEdit, onEnsureList, onView, ro
                 value={globalFilter ?? ''}
               />
             </div>
-            <span className="text-xs font-medium text-zinc-500">
-              {filteredCount} résultat{filteredCount > 1 ? 's' : ''}
-            </span>
+            <div className="flex items-center gap-3 max-sm:w-full max-sm:justify-between">
+              <Button disabled={busy} onClick={openCreateDialog} size="lg" type="button">
+                <AppIcon icon={PlusSignIcon} size={16} />
+                Ajouter
+              </Button>
+            </div>
           </div>
 
-          <div className="overflow-hidden rounded-lg border border-zinc-200 bg-white">
+          <div className="overflow-x-auto bg-white">
             <Table>
               <TableHeader>
                 {table.getHeaderGroups().map((headerGroup) => (
@@ -641,7 +659,7 @@ function FormDialog({ busy, dialog, onOpenChange, onSubmit, onUpdate, service })
           <DialogFooter>
             <Button disabled={busy} type="button" variant="outline" onClick={() => onOpenChange(false)}>Annuler</Button>
             <Button disabled={busy} type="submit">
-              <AppIcon icon={dialog.mode === 'create' ? PlusSignIcon : CheckmarkCircle01Icon} size={15} />
+              {dialog.mode === 'edit' ? <AppIcon icon={CheckmarkCircle01Icon} size={15} /> : null}
               {dialog.mode === 'create' ? 'Ajouter' : 'Enregistrer'}
             </Button>
           </DialogFooter>
