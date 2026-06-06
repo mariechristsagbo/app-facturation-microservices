@@ -27,6 +27,7 @@
     "start:entrepots": "node --env-file=.env services/warehouse-service/server.js"
   },
   "dependencies": {
-    "express": "^5.1.0"
+    "express": "^5.1.0",
+    "helmet": "^8.2.0"
   }
 }
