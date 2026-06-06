@@ -55,6 +55,13 @@ Flux principal:
 
 <img width="2940" height="1610" alt="image" src="https://github.com/user-attachments/assets/e8a0b4e0-fdbe-48be-a4fa-23e2bbaa541d" />
 
+## Interfaces frontend React
+<img width="2940" height="1634" alt="image" src="https://github.com/user-attachments/assets/8b8b32db-ae56-42ca-8ef7-19331990e831" />
+<img width="2940" height="1634" alt="image" src="https://github.com/user-attachments/assets/88b60a4a-e728-448f-be94-9b730de4fe5e" />
+<img width="2940" height="1634" alt="image" src="https://github.com/user-attachments/assets/4c75eda4-ce83-459c-bae2-34e3b47819e1" />
+<img width="2940" height="1634" alt="image" src="https://github.com/user-attachments/assets/c441aeee-176b-41fa-adf5-9d255e94ac84" />
+<img width="2940" height="1634" alt="image" src="https://github.com/user-attachments/assets/22633e4d-5f2c-48a4-8885-998ce403cd5e" />
+
 ## Services métier
 
 | Service | Nom Docker | Port interne | Rôle |
