@@ -35,7 +35,6 @@ export default function App() {
             <div className="flex min-w-0 items-center gap-3">
               <SidebarTrigger className="md:hidden" />
               <div className="min-w-0">
-                <p className="text-xs font-bold uppercase text-zinc-500">Facturation microservices</p>
                 <h1 className="mt-1 text-3xl font-black leading-tight text-zinc-950 md:text-4xl">{activeService.label}</h1>
               </div>
             </div>
