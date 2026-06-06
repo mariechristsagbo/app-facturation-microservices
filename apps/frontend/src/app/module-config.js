@@ -1,10 +1,10 @@
 import {
   BanknoteIcon,
   CircleDollarSignIcon,
-  DashboardSquareIcon,
   InvoiceIcon,
   PackageIcon,
   ShoppingCart01Icon,
+  StoreManagementIcon,
   UserMultipleIcon,
   WarehouseIcon
 } from '@hugeicons/core-free-icons';
@@ -20,7 +20,7 @@ export const SERVICE_ICONS = {
   entrepot: WarehouseIcon
 };
 
-export const APP_ICON = DashboardSquareIcon;
+export const APP_ICON = StoreManagementIcon;
 
 export const SERVICE_ROUTES = {
   client: '/clients',
