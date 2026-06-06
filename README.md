@@ -1,101 +1,99 @@
-# Facturation microservices
+# Billizy
 
-Application de facturation construite autour de microservices Node.js/Express, d'une interface React et d'une couche d'accès sécurisée avec Traefik, Authelia et LLDAP.
+Billizy est une application de gestion commerciale et de facturation construite avec une architecture microservices. Elle permet de gérer les clients, les produits, les factures, les règlements, les caisses et les entrepôts depuis une interface React sobre, tout en exposant des APIs métier isolées derrière une gateway sécurisée.
 
-Le projet sert à deux objectifs: exposer des APIs métier simples et cohérentes, puis montrer comment les placer derrière une gateway et une authentification centralisée comme dans une architecture de microservices.
+Le projet sert à la fois de démonstration produit et de base technique : une interface moderne, des services Express indépendants, une persistance SQLite par domaine, et une couche d'accès sécurisée avec Traefik, Authelia et LLDAP.
 
 ## Aperçu
 
-| Élément | Rôle |
+Billizy couvre les opérations principales d'une petite application de gestion commerciale :
+
+- consulter et créer des enregistrements métier depuis des tableaux filtrables ;
+- valider les formulaires avec Zod et React Hook Form avant l'appel API ;
+- consulter les réponses complètes des microservices dans des modales ;
+- protéger l'accès local avec une authentification centralisée ;
+- persister les données dans des bases SQLite séparées par service.
+
+## Fonctionnalités
+
+| Domaine | Fonctionnalités |
 | --- | --- |
-| Frontend React/Vite | Interface métier CRUD pour clients, produits, commandes, factures, règlements, caisses et entrepôts. |
-| Microservices Express | Services métier indépendants avec endpoints `/create`, `/list`, `/view/:id`, `/edit/:id`, `/delete/:id`. |
-| Traefik | API Gateway et reverse proxy. C'est le seul point d'entrée public de la stack Docker. |
-| Authelia | Portail d'authentification et middleware `ForwardAuth` pour protéger l'application. |
-| LLDAP | Annuaire LDAP léger utilisé par Authelia pour vérifier les utilisateurs et groupes. |
+| Clients | Création, consultation, modification et suppression de clients. |
+| Produits | Gestion du catalogue, des prix, catégories et références. |
+| Factures | Création et consultation des factures liées aux commandes. |
+| Règlements | Enregistrement des paiements, modes de règlement et caisses associées. |
+| Caisses | Suivi des caisses, devises, responsables et soldes. |
+| Entrepôts | Gestion des lieux de stockage, villes, adresses et capacités. |
+
+Le module commandes existe côté API, mais il n'est pas affiché dans la sidebar frontend pour garder l'interface de test plus claire.
+
+## Aperçu visuel
+
+Ces captures donnent un aperçu rapide de l'interface et de la stack sécurisée, sans avoir besoin de démarrer le projet localement.
+
+### Interface Billizy
+
+<img width="2940" height="1634" alt="Interface Billizy - tableau de données" src="https://github.com/user-attachments/assets/8b8b32db-ae56-42ca-8ef7-19331990e831" />
+
+<img width="2940" height="1634" alt="Interface Billizy - formulaire en modale" src="https://github.com/user-attachments/assets/88b60a4a-e728-448f-be94-9b730de4fe5e" />
+
+<img width="2940" height="1634" alt="Interface Billizy - consultation des données" src="https://github.com/user-attachments/assets/4c75eda4-ce83-459c-bae2-34e3b47819e1" />
+
+### Dashboard Traefik
+
+<img width="2940" height="1608" alt="Dashboard Traefik - services et routeurs" src="https://github.com/user-attachments/assets/9f9124f0-f948-419a-8d76-25b3737270a1" />
+
+<img width="2940" height="1610" alt="Dashboard Traefik - routes applicatives" src="https://github.com/user-attachments/assets/d666fbfd-66fb-46ed-ae18-eb5f519ad608" />
+
+## Stack technique
+
+| Couche | Technologies |
+| --- | --- |
+| Frontend | React, Vite, React Router, shadcn/ui, Tailwind CSS, Hugeicons, TanStack Table |
+| Formulaires | React Hook Form, Zod, `@hookform/resolvers` |
+| Backend | Node.js, Express |
+| Données | SQLite par microservice |
+| Sécurité | Traefik, Authelia, LLDAP, Helmet |
+| Tests | `node:test`, `npm audit`, build Vite |
+| Conteneurs | Docker Compose |
 
 ## Architecture
 
 ```mermaid
 flowchart LR
-  B[Browser] --> T[Traefik API Gateway]
-  T -->|ForwardAuth| A[Authelia]
-  A -->|LDAP bind/search| L[LLDAP]
-  T --> F[Frontend React]
-  T -->|/api/client/*| C[client-service]
-  T -->|/api/produit/*| P[product-service]
-  T -->|/api/commande/*| O[order-service]
-  T -->|/api/facture/*| I[invoice-service]
-  T -->|/api/reglement/*| R[reglement-service]
-  T -->|/api/caisse/*| CA[cash-register-service]
-  T -->|/api/entrepot/*| W[warehouse-service]
+  B["Navigateur"] --> T["Traefik API Gateway"]
+  T -->|"ForwardAuth"| A["Authelia"]
+  A -->|"LDAP"| L["LLDAP"]
+  T --> F["Frontend Billizy"]
+  T -->|"/api/client/*"| C["client-service"]
+  T -->|"/api/produit/*"| P["product-service"]
+  T -->|"/api/commande/*"| O["order-service"]
+  T -->|"/api/facture/*"| I["invoice-service"]
+  T -->|"/api/reglement/*"| R["reglement-service"]
+  T -->|"/api/caisse/*"| CA["cash-register-service"]
+  T -->|"/api/entrepot/*"| W["warehouse-service"]
 ```
 
-Flux principal:
+Traefik est le seul point d'entrée public de la stack Docker. Il protège le frontend, les APIs métier, l'interface LLDAP et le dashboard Traefik avec Authelia. Les microservices restent internes aux réseaux Docker et ne sont pas exposés directement sur la machine hôte.
 
-1. Le navigateur ouvre `https://app.facturation.test:8443`.
-2. Traefik reçoit la requête et demande à Authelia si l'utilisateur est connecté.
-3. Authelia vérifie l'identité dans LLDAP.
-4. Si la session est valide, Traefik laisse passer la requête vers le frontend ou le microservice concerné.
-5. Les microservices ne sont pas exposés directement sur la machine hôte.
+## Démarrage rapide
 
-## Captures
+### Prérequis
 
-### Architecture microservice
-
-<img width="1664" height="820" alt="architecture" src="https://github.com/user-attachments/assets/cbd69bc7-6a87-45bd-8f6f-5235da34fdc7" />
-
-### Dashboard Traefik
-
-<img width="2940" height="1608" alt="Dashboard Traefik" src="https://github.com/user-attachments/assets/9f9124f0-f948-419a-8d76-25b3737270a1" />
-
-<img width="2940" height="1610" alt="image" src="https://github.com/user-attachments/assets/d666fbfd-66fb-46ed-ae18-eb5f519ad608" />
-
-<img width="2936" height="1602" alt="image" src="https://github.com/user-attachments/assets/26aa166c-cebc-4eaf-aa3f-83e372a90cdc" />
-
-<img width="2940" height="1610" alt="image" src="https://github.com/user-attachments/assets/e8a0b4e0-fdbe-48be-a4fa-23e2bbaa541d" />
-
-## Interfaces frontend React
-<img width="2940" height="1634" alt="image" src="https://github.com/user-attachments/assets/8b8b32db-ae56-42ca-8ef7-19331990e831" />
-<img width="2940" height="1634" alt="image" src="https://github.com/user-attachments/assets/88b60a4a-e728-448f-be94-9b730de4fe5e" />
-<img width="2940" height="1634" alt="image" src="https://github.com/user-attachments/assets/4c75eda4-ce83-459c-bae2-34e3b47819e1" />
-<img width="2940" height="1634" alt="image" src="https://github.com/user-attachments/assets/c441aeee-176b-41fa-adf5-9d255e94ac84" />
-<img width="2940" height="1634" alt="image" src="https://github.com/user-attachments/assets/22633e4d-5f2c-48a4-8885-998ce403cd5e" />
-
-## Services métier
-
-| Service | Nom Docker | Port interne | Rôle |
-| --- | --- | --- | --- |
-| Client | `client-service` | `3002` | Gestion des clients |
-| Produit | `product-service` | `3003` | Gestion des produits |
-| Commande | `order-service` | `3005` | Gestion des commandes |
-| Facture | `invoice-service` | `3006` | Génération et consultation des factures |
-| Règlement | `reglement-service` | `3007` | Enregistrement des paiements |
-| Caisse | `cash-register-service` | `3008` | Gestion des caisses |
-| Entrepôt | `warehouse-service` | `3009` | Gestion des entrepôts |
-
-Dans la stack Docker, ces ports sont internes au réseau Docker. Le navigateur passe toujours par Traefik.
-
-Chaque microservice persiste ses données dans sa propre base SQLite locale sous `services/<service>/data/`. Les schemas SQL sont versionnes avec le depot; les fichiers runtime `.sqlite` sont generes localement au demarrage et ignores par Git.
-
-## Prérequis
-
-- Node.js 22 ou une version compatible avec le projet.
+- Node.js 22 ou une version compatible.
 - Docker Desktop démarré.
-- OpenSSL disponible localement pour générer le certificat de développement.
+- OpenSSL disponible pour générer les certificats locaux.
 - Accès administrateur pour modifier `/etc/hosts`.
 
-Installer les dépendances:
+### Installation
 
 ```bash
 npm install
 ```
 
-## Configuration locale
+### Configuration locale
 
-### 1. Déclarer les domaines locaux
-
-Ajouter ces lignes dans `/etc/hosts`:
+Ajouter les domaines locaux dans `/etc/hosts` :
 
 ```text
 127.0.0.1 app.facturation.test
@@ -103,164 +101,92 @@ Ajouter ces lignes dans `/etc/hosts`:
 127.0.0.1 traefik.facturation.test
 ```
 
-Ces domaines pointent vers la machine locale. Traefik utilise ensuite le nom de domaine pour décider quel service doit recevoir la requête.
-
-### 2. Créer le réseau Docker partagé
+Créer le réseau Docker partagé :
 
 ```bash
 docker network create proxy
 ```
 
-Si Docker indique que le réseau existe déjà, passer à l'étape suivante. Ce réseau permet à Traefik de joindre le frontend, Authelia, LLDAP et les microservices.
+Si Docker indique que le réseau existe déjà, l'étape peut être ignorée.
 
-### 3. Créer les variables locales
+Créer le fichier d'environnement local :
 
 ```bash
 cp .env.auth.example .env.auth
 ```
 
-Pour une démonstration locale, le fichier fournit l'utilisateur LLDAP suivant:
-
-```text
-username: admin
-password: admin123
-```
-
-Pour un usage plus sérieux, remplacer les secrets de `.env.auth` avec des valeurs générées par exemple via:
-
-```bash
-openssl rand -hex 32
-```
-
-### 4. Générer le certificat TLS local
+Générer le certificat TLS de développement :
 
 ```bash
 npm run auth:certs
 ```
 
-Le certificat auto-signé est généré dans `infra/traefik/certs/`. Le navigateur peut afficher un avertissement de sécurité, ce qui est normal pour un certificat local non émis par une autorité publique.
-
-## Démarrage
-
-Vérifier la configuration Docker Compose:
-
-```bash
-npm run auth:config
-```
-
-Lancer toute la stack:
+Lancer toute la stack :
 
 ```bash
 npm run auth:up
 ```
 
-Arrêter la stack:
-
-```bash
-npm run auth:down
-```
-
-Voir l'état des conteneurs:
-
-```bash
-npm run auth:ps
-```
-
-Les scripts `auth:*` utilisent `scripts/compose-auth.sh`, ce qui évite de répéter la commande Docker Compose complète.
-
 ## URLs locales
 
 | URL | Usage |
 | --- | --- |
-| `https://app.facturation.test:8443` | Application React |
+| `https://app.facturation.test:8443` | Application Billizy |
 | `https://app.facturation.test:8443/auth` | Portail Authelia |
-| `https://admin.facturation.test:8443` | Interface d'administration LLDAP |
+| `https://admin.facturation.test:8443` | Administration LLDAP |
 | `https://traefik.facturation.test:8443` | Dashboard Traefik |
 
-Le port `8443` côté machine correspond au port `443` du conteneur Traefik. Cette configuration évite les conflits avec d'autres projets qui utilisent déjà le port `443`.
+Identifiants de démonstration LLDAP :
 
-## Routage API
+```text
+username: admin
+password: admin123
+email: admin@facturation.test
+```
 
-Le frontend appelle les APIs via Traefik, avec le préfixe `/api/:service`.
+Pour un usage plus sérieux, remplacer les secrets de `.env.auth` avec des valeurs générées, par exemple :
 
-Le seul endpoint applicatif servi par le frontend est `/api/me`. Il lit les headers `Remote-*` ajoutés après authentification Authelia pour afficher l'utilisateur connecté.
+```bash
+openssl rand -hex 32
+```
 
-| URL publique | Middleware Traefik | Cible interne |
-| --- | --- | --- |
-| `/api/client/list` | `StripPrefix(/api/client)` | `http://client-service:3002/list` |
-| `/api/produit/list` | `StripPrefix(/api/produit)` | `http://product-service:3003/list` |
-| `/api/commande/list` | `StripPrefix(/api/commande)` | `http://order-service:3005/list` |
-| `/api/facture/list` | `StripPrefix(/api/facture)` | `http://invoice-service:3006/list` |
-| `/api/reglement/list` | `StripPrefix(/api/reglement)` | `http://reglement-service:3007/list` |
-| `/api/caisse/list` | `StripPrefix(/api/caisse)` | `http://cash-register-service:3008/list` |
-| `/api/entrepot/list` | `StripPrefix(/api/entrepot)` | `http://warehouse-service:3009/list` |
+## Scripts utiles
 
-Exemple: le navigateur appelle `/api/client/list`. Traefik retire `/api/client`, puis transmet `/list` au service `client-service`.
-
-Chaque service suit le même contrat:
-
-| Action | Méthode | Endpoint natif |
-| --- | --- | --- |
-| Créer | `POST` | `/create` |
-| Lister | `GET` | `/list` |
-| Voir | `GET` | `/view/:id` |
-| Modifier | `PATCH` | `/edit/:id` |
-| Supprimer | `DELETE` | `/delete/:id` |
-
-## Sécurité et exposition réseau
-
-Dans le mode Docker sécurisé:
-
-- Traefik est le seul service qui publie des ports sur l'hôte: `8080:80` et `8443:443`.
-- Le frontend, Authelia, LLDAP et les microservices restent accessibles uniquement dans les réseaux Docker.
-- Les APIs métier sont protégées par Authelia avant d'être transmises aux microservices.
-- L'interface LLDAP et le dashboard Traefik sont également protégés par Authelia.
-
-Le projet utilise le provider fichier de Traefik dans `infra/traefik/dynamic.yml`. Les routes ne sont donc pas déclarées avec des labels Docker.
-
-## Fichiers de configuration
-
-| Fichier | Rôle |
+| Script | Description |
 | --- | --- |
-| `docker-compose.yml` | Traefik, ports publics et provider fichier |
-| `docker-compose.auth.yml` | Authelia et LLDAP |
-| `docker-compose.frontend.yml` | Frontend React servi en production par Node |
-| `docker-compose.microservices.yml` | Microservices métier |
-| `infra/traefik/dynamic.yml` | Routers, middlewares, services et certificat TLS Traefik |
-| `infra/authelia/configuration.yml` | Politique d'accès Authelia et connexion LDAP vers LLDAP |
-| `scripts/compose-auth.sh` | Wrapper de commande Docker Compose |
+| `npm run auth:certs` | Génère le certificat TLS local pour `*.facturation.test`. |
+| `npm run auth:config` | Valide la configuration Docker Compose complète. |
+| `npm run auth:up` | Build et lance Traefik, Authelia, LLDAP, le frontend et les microservices. |
+| `npm run auth:down` | Arrête la stack Docker. |
+| `npm run auth:ps` | Affiche l'état des conteneurs. |
+| `npm run dev:frontend` | Lance le frontend Vite en développement. |
+| `npm run build:frontend` | Compile le frontend. |
+| `npm test` | Lance les tests automatisés. |
+| `npm start` | Lance les microservices en local sans gateway ni authentification. |
 
-## Développement frontend
+## Développement
 
-Le frontend peut aussi être lancé seul en mode développement Vite:
+Le frontend peut être lancé seul en mode Vite :
 
 ```bash
 npm run dev:frontend
 ```
 
-URL de développement:
+URL de développement :
 
 ```text
 http://localhost:5173
 ```
 
-Ce mode sert au développement de l'interface. Pour tester l'authentification Authelia, le routage Traefik et les APIs protégées, utiliser `https://app.facturation.test:8443` avec `npm run auth:up`.
+Ce mode est pratique pour travailler l'interface. Pour tester l'authentification Authelia, le routage Traefik et les APIs protégées, utiliser la stack Docker complète avec `npm run auth:up`.
 
-Build du frontend:
-
-```bash
-npm run build:frontend
-```
-
-## Mode backend simple
-
-Pour travailler uniquement sur les microservices sans Traefik ni Authelia:
+Les microservices peuvent aussi être lancés sans Traefik ni Authelia :
 
 ```bash
 npm start
 ```
 
-Lancement individuel:
+Lancement individuel :
 
 ```bash
 npm run start:clients
@@ -272,66 +198,77 @@ npm run start:caisses
 npm run start:entrepots
 ```
 
-Ce mode est utile pour développer rapidement un service, mais il ne représente pas l'architecture sécurisée de démonstration.
+## Données et persistance
 
-## Scripts utiles
+Chaque microservice possède sa propre base SQLite locale sous `services/<service>/data/`. Les schémas SQL sont versionnés avec le dépôt, tandis que les fichiers runtime `.sqlite`, `.sqlite-wal`, `.sqlite-shm` et `.sqlite-journal` sont ignorés par Git.
 
-| Script | Description |
+Ce choix garde une séparation claire entre les domaines métier tout en évitant les anciens fichiers JSON comme base de données.
+
+## API
+
+Le frontend appelle les APIs via Traefik avec le préfixe `/api/:service`. Traefik retire ce préfixe avant de transmettre la requête au microservice cible.
+
+| URL publique | Cible interne |
 | --- | --- |
-| `npm run auth:certs` | Génère le certificat TLS local pour `*.facturation.test`. |
-| `npm run auth:config` | Valide la configuration Docker Compose complète. |
-| `npm run auth:up` | Build et lance Traefik, Authelia, LLDAP, frontend et microservices. |
-| `npm run auth:down` | Arrête la stack Docker. |
-| `npm run auth:ps` | Affiche les conteneurs de la stack. |
-| `npm run dev:frontend` | Lance le frontend Vite en développement. |
-| `npm run build:frontend` | Compile le frontend. |
-| `npm start` | Lance les microservices en local sans gateway. |
+| `/api/client/list` | `http://client-service:3002/list` |
+| `/api/produit/list` | `http://product-service:3003/list` |
+| `/api/commande/list` | `http://order-service:3005/list` |
+| `/api/facture/list` | `http://invoice-service:3006/list` |
+| `/api/reglement/list` | `http://reglement-service:3007/list` |
+| `/api/caisse/list` | `http://cash-register-service:3008/list` |
+| `/api/entrepot/list` | `http://warehouse-service:3009/list` |
 
-## Documentation officielle
+Chaque microservice suit le même contrat CRUD :
 
-- [Traefik - Routing overview](https://doc.traefik.io/traefik/routing/overview/)
-- [Traefik - File provider](https://doc.traefik.io/traefik/reference/install-configuration/providers/others/file/)
-- [Traefik - ForwardAuth middleware](https://doc.traefik.io/traefik/reference/routing-configuration/http/middlewares/forwardauth/)
-- [Traefik - StripPrefix middleware](https://doc.traefik.io/traefik/reference/routing-configuration/http/middlewares/stripprefix/)
-- [Authelia - Intégration Traefik](https://www.authelia.com/integration/proxies/traefik/)
-- [Authelia - LDAP authentication backend](https://www.authelia.com/configuration/first-factor/ldap/)
-- [Authelia - Access control](https://www.authelia.com/configuration/security/access-control/)
-- [LLDAP - Projet GitHub](https://github.com/lldap/lldap)
+| Action | Méthode | Endpoint natif |
+| --- | --- | --- |
+| Créer | `POST` | `/create` |
+| Lister | `GET` | `/list` |
+| Voir | `GET` | `/view/:id` |
+| Modifier | `PATCH` | `/edit/:id` |
+| Supprimer | `DELETE` | `/delete/:id` |
 
-## Dépannage
+Exemple de création client :
 
-### Le domaine ne répond pas
-
-Vérifier que `/etc/hosts` contient bien:
-
-```text
-127.0.0.1 app.facturation.test
-127.0.0.1 admin.facturation.test
-127.0.0.1 traefik.facturation.test
+```http
+POST /api/client/create
+Content-Type: application/json
 ```
 
-### Le navigateur affiche une alerte TLS
+```json
+{
+  "nom": "SAGBO",
+  "prenom": "Dieudonné Marie-Christ",
+  "telephone": "+22901XXXXXXXX",
+  "email": "mariechristsagbo@gmail.com",
+  "adresse": "Cotonou, Benin"
+}
+```
 
-C'est attendu avec un certificat auto-signé local. Pour une démonstration locale, continuer vers le site après avoir vérifié que l'URL est bien `*.facturation.test:8443`.
+Le frontend expose aussi `/api/me`, qui lit les headers `Remote-*` transmis par Authelia pour afficher l'utilisateur connecté.
 
-### Le port 443 est déjà utilisé
+## Sécurité et qualité
 
-La stack publie Traefik sur `8443` côté machine pour éviter ce conflit. Utiliser donc `https://app.facturation.test:8443` et non `https://app.facturation.test`.
+- Traefik est le seul service qui publie des ports sur l'hôte : `8080:80` et `8443:443`.
+- Authelia protège l'application, les APIs, l'administration LLDAP et le dashboard Traefik.
+- LLDAP centralise les utilisateurs de démonstration.
+- Les services Express utilisent Helmet et une gestion d'erreurs commune.
+- Les erreurs inattendues côté backend sont masquées pour éviter d'exposer des détails internes.
+- Les validations backend sont standardisées avec des helpers partagés.
+- Les formulaires frontend sont validés avec Zod et React Hook Form.
+- Les bases SQLite runtime et les certificats générés localement ne sont pas suivis par Git.
 
-### Authelia ne se connecte pas à LLDAP au premier démarrage
-
-LLDAP peut prendre quelques secondes à initialiser sa base et son utilisateur admin. Relancer la stack règle généralement ce cas:
+Commandes de vérification :
 
 ```bash
-npm run auth:down
-npm run auth:up
+npm test
+npm run build:frontend
+npm audit
 ```
 
-### Le dashboard Traefik ne s'affiche pas
+## Notes locales
 
-Vérifier que la stack est lancée et que l'utilisateur connecté appartient au groupe autorisé dans LLDAP. En local, l'utilisateur `admin` créé par LLDAP est prévu pour administrer la démonstration.
-
-## Notes de projet
-
-- Les schemas SQL des services sont versionnes; les bases SQLite runtime sous `services/*/data/` restent locales et ignorees par Git.
-- Les certificats générés localement dans `infra/traefik/certs/` ne doivent pas être utilisés en production.
+- Le certificat TLS généré par `npm run auth:certs` est auto-signé. Un avertissement navigateur est normal en développement local.
+- Les domaines `*.facturation.test` doivent être déclarés dans `/etc/hosts` pour que Traefik puisse router correctement les requêtes.
+- Le port HTTPS local est `8443` afin d'éviter les conflits avec d'autres services utilisant déjà le port `443`.
+- Les scripts `auth:*` passent par `scripts/compose-auth.sh` pour éviter de répéter la commande Docker Compose complète.
