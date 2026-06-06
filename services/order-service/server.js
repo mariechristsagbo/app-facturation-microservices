@@ -2,9 +2,10 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { formatDate } from '../../shared/format-date.js';
 import { requireEnv } from '../../shared/env.js';
-import { asyncRoute, createServiceApp, httpError, listen, registerCommonHandlers, requireFields } from '../../shared/express.js';
+import { asyncRoute, createServiceApp, httpError, listen, registerCommonHandlers } from '../../shared/express.js';
 import { getJson } from '../../shared/http.js';
 import { readSqliteSchema, sqliteFilePath } from '../../shared/sqlite.js';
+import { readOptionalDate, readOptionalNumber, readOptionalString, readRequiredNumber, readRequiredPositiveInteger } from '../../shared/validation.js';
 import { createOrderStore } from './store.js';
 
 const serviceName = 'order-service';
@@ -59,10 +60,10 @@ app.patch('/edit/:id', asyncRoute(async (req, res) => {
   }
 
   const updatedOrder = await orders.update(req.params.id, {
-    client_id: req.body.client_id ?? order.client_id,
-    date: req.body.date ?? order.date,
-    total: req.body.total === undefined ? order.total : Number(req.body.total),
-    statut: req.body.statut ?? order.statut,
+    client_id: readOptionalNumber(req.body, 'client_id', order.client_id, 'Client', { integer: true, min: 1 }),
+    date: readOptionalDate(req.body, 'date', order.date, 'Date'),
+    total: readOptionalNumber(req.body, 'total', order.total, 'Total', { min: 0 }),
+    statut: readOptionalString(req.body, 'statut', order.statut, 'Statut'),
     lignes: req.body.lignes ?? order.lignes
   });
 
@@ -100,9 +101,7 @@ registerCommonHandlers(app, serviceName);
 listen(app, serviceName, 3005);
 
 async function createOrder(body, options = {}) {
-  requireFields(body, ['client_id']);
-
-  const clientId = body.client_id;
+  const clientId = readRequiredPositiveInteger(body, 'client_id', 'Client');
   const requestLines = body.lignes ?? [];
 
   if (!Array.isArray(requestLines)) {
@@ -117,23 +116,11 @@ async function createOrder(body, options = {}) {
   const lines = [];
 
   for (const line of requestLines) {
-    const productId = line.produit_id;
-    const quantity = Number(line.quantite);
-
-    if (!productId || !line.quantite) {
-      throw httpError(400, 'Chaque ligne doit contenir produit_id et quantite');
-    }
-
-    if (!Number.isFinite(quantity) || quantity <= 0) {
-      throw httpError(400, 'La quantité doit être positive');
-    }
+    const productId = readRequiredPositiveInteger(line, 'produit_id', 'Produit');
+    const quantity = readRequiredNumber(line, 'quantite', 'Quantité', { minExclusive: 0 });
 
     const product = options.validateExternalServices ? await getProduct(productId) : { id: productId, prix: line.prix };
-    const unitPrice = Number(line.prix ?? product.prix);
-
-    if (!Number.isFinite(unitPrice) || unitPrice < 0) {
-      throw httpError(400, 'Le prix doit être un nombre positif');
-    }
+    const unitPrice = readOptionalNumber(line, 'prix', product.prix, 'Prix', { min: 0 });
 
     lines.push({
       produit_id: Number(product.id ?? productId),
@@ -144,26 +131,26 @@ async function createOrder(body, options = {}) {
 
   const total = lines.reduce((sum, line) => sum + line.prix * line.quantite, 0);
   const orderId = await orders.nextNumericId();
-  const date = body.date || formatDate();
+  const date = readOptionalDate(body, 'date', formatDate(), 'Date');
 
   return orders.create({
     id: orderId,
     client_id: Number(client.id ?? clientId),
     date,
     total,
-    statut: body.statut || 'validée',
+    statut: readOptionalString(body, 'statut', 'validée', 'Statut'),
     lignes: lines,
     createdAt: new Date(`${date}T00:00:00.000Z`).toISOString()
   });
 }
 
 async function getClient(clientId) {
-  const response = await getJson(`${CLIENT_SERVICE_URL}/view/${clientId}`, 'Impossible de vérifier le client');
+  const response = await getJson(`${CLIENT_SERVICE_URL}/view/${encodeURIComponent(clientId)}`, 'Impossible de vérifier le client');
   return response.data;
 }
 
 async function getProduct(productId) {
-  const response = await getJson(`${PRODUCT_SERVICE_URL}/view/${productId}`, 'Impossible de vérifier le produit');
+  const response = await getJson(`${PRODUCT_SERVICE_URL}/view/${encodeURIComponent(productId)}`, 'Impossible de vérifier le produit');
   return response.data;
 }
 

@@ -1,7 +1,8 @@
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { asyncRoute, createServiceApp, httpError, listen, registerCommonHandlers, requireFields } from '../../shared/express.js';
+import { asyncRoute, createServiceApp, httpError, listen, registerCommonHandlers } from '../../shared/express.js';
 import { readSqliteSchema, SqliteStore, sqliteFilePath } from '../../shared/sqlite.js';
+import { readOptionalNumber, readOptionalString, readRequiredNumber, readRequiredString } from '../../shared/validation.js';
 
 const serviceName = 'product-service';
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -14,16 +15,14 @@ const products = new SqliteStore(sqliteFilePath(__dirname, 'products.sqlite'), {
 const app = createServiceApp(serviceName);
 
 app.post('/create', asyncRoute(async (req, res) => {
-  requireFields(req.body, ['nom', 'prix']);
-
   const productId = await products.nextNumericId();
 
   const product = await products.create({
     id: productId,
-    nom: req.body.nom,
-    reference: req.body.reference || `PRD-${String(productId).padStart(3, '0')}`,
-    categorie: req.body.categorie || null,
-    prix: Number(req.body.prix),
+    nom: readRequiredString(req.body, 'nom', 'Nom'),
+    reference: readOptionalString(req.body, 'reference', `PRD-${String(productId).padStart(3, '0')}`, 'Référence'),
+    categorie: readOptionalString(req.body, 'categorie', null, 'Catégorie'),
+    prix: readRequiredNumber(req.body, 'prix', 'Prix', { min: 0 }),
     createdAt: new Date().toISOString()
   });
 
@@ -67,10 +66,10 @@ app.patch('/edit/:id', asyncRoute(async (req, res) => {
   }
 
   const updatedProduct = await products.update(req.params.id, {
-    nom: req.body.nom ?? product.nom,
-    reference: req.body.reference ?? product.reference,
-    categorie: req.body.categorie ?? product.categorie ?? null,
-    prix: req.body.prix === undefined ? product.prix : Number(req.body.prix)
+    nom: readOptionalString(req.body, 'nom', product.nom, 'Nom'),
+    reference: readOptionalString(req.body, 'reference', product.reference, 'Référence'),
+    categorie: readOptionalString(req.body, 'categorie', product.categorie ?? null, 'Catégorie'),
+    prix: readOptionalNumber(req.body, 'prix', product.prix, 'Prix', { min: 0 })
   });
 
   res.json({

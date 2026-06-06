@@ -1,9 +1,12 @@
 import express from 'express';
+import helmet from 'helmet';
 
 export function createServiceApp(serviceName) {
   const app = express();
 
-  app.use(express.json());
+  app.disable('x-powered-by');
+  app.use(helmet());
+  app.use(express.json({ limit: '100kb' }));
   app.get('/health', (req, res) => {
     res.json({ service: serviceName, status: 'ok' });
   });
@@ -38,8 +41,21 @@ export function registerCommonHandlers(app, serviceName) {
 
   app.use((error, req, res, next) => {
     const status = error.status || 500;
-    res.status(status).json({ service: serviceName, message: error.message });
+    if (status >= 500) {
+      console.error(`[${serviceName}]`, error);
+    }
+
+    res.status(status).json(errorResponseBody(serviceName, error));
   });
+}
+
+export function errorResponseBody(serviceName, error) {
+  const status = error.status || 500;
+
+  return {
+    service: serviceName,
+    message: status >= 500 ? 'Erreur interne du service' : error.message
+  };
 }
 
 export function listen(app, serviceName, defaultPort) {

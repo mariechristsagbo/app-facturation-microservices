@@ -2,9 +2,10 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { formatDate } from '../../shared/format-date.js';
 import { requireEnv } from '../../shared/env.js';
-import { asyncRoute, createServiceApp, httpError, listen, registerCommonHandlers, requireFields } from '../../shared/express.js';
+import { asyncRoute, createServiceApp, httpError, listen, registerCommonHandlers } from '../../shared/express.js';
 import { getJson } from '../../shared/http.js';
 import { readSqliteSchema, SqliteStore, sqliteFilePath } from '../../shared/sqlite.js';
+import { readOptionalDate, readOptionalEnum, readOptionalNumber, readOptionalString, readRequiredPositiveInteger } from '../../shared/validation.js';
 
 const serviceName = 'invoice-service';
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -15,6 +16,7 @@ const invoices = new SqliteStore(sqliteFilePath(__dirname, 'invoices.sqlite'), {
 });
 
 const ORDER_SERVICE_URL = requireEnv('ORDER_SERVICE_URL');
+const INVOICE_STATUSES = ['non payée', 'partiellement payée', 'payée', 'annulée'];
 
 const app = createServiceApp(serviceName);
 
@@ -60,16 +62,12 @@ app.patch('/edit/:id', asyncRoute(async (req, res) => {
     throw httpError(404, 'Facture introuvable');
   }
 
-  if (req.body.statut !== undefined) {
-    validateInvoiceStatus(req.body.statut);
-  }
-
   const updatedInvoice = await invoices.update(req.params.id, {
-    commande_id: req.body.commande_id ?? invoice.commande_id,
-    numero: req.body.numero ?? invoice.numero,
-    date_emission: req.body.date_emission ?? invoice.date_emission,
-    montant: req.body.montant === undefined ? invoice.montant : Number(req.body.montant),
-    statut: req.body.statut ?? invoice.statut
+    commande_id: readOptionalNumber(req.body, 'commande_id', invoice.commande_id, 'Commande', { integer: true, min: 1 }),
+    numero: readOptionalString(req.body, 'numero', invoice.numero, 'Numéro'),
+    date_emission: readOptionalDate(req.body, 'date_emission', invoice.date_emission, 'Date émission'),
+    montant: readOptionalNumber(req.body, 'montant', invoice.montant, 'Montant', { min: 0 }),
+    statut: readOptionalEnum(req.body, 'statut', INVOICE_STATUSES, invoice.statut, 'Statut')
   });
 
   res.json({
@@ -102,18 +100,8 @@ registerCommonHandlers(app, serviceName);
 listen(app, serviceName, 3006);
 
 async function createInvoice(body, options = {}) {
-  requireFields(body, ['commande_id']);
-
-  const orderId = body.commande_id;
-  const amount = body.montant === undefined ? null : Number(body.montant);
-
-  if (amount !== null && (!Number.isFinite(amount) || amount < 0)) {
-    throw httpError(400, 'Le montant doit être un nombre positif');
-  }
-
-  if (body.statut !== undefined) {
-    validateInvoiceStatus(body.statut);
-  }
+  const orderId = readRequiredPositiveInteger(body, 'commande_id', 'Commande');
+  const amount = readOptionalNumber(body, 'montant', null, 'Montant', { min: 0 });
 
   const existing = (await invoices.all()).find((invoice) => String(getOrderId(invoice)) === String(orderId));
   if (existing) {
@@ -122,22 +110,22 @@ async function createInvoice(body, options = {}) {
 
   const order = options.validateOrder ? await getOrder(orderId) : { id: orderId, total: amount ?? 0 };
   const invoiceId = await invoices.nextNumericId();
-  const date = body.date_emission || formatDate();
+  const date = readOptionalDate(body, 'date_emission', formatDate(), 'Date émission');
   const invoiceAmount = amount ?? order.total;
 
   return invoices.create({
     id: invoiceId,
     commande_id: Number(order.id ?? orderId),
-    numero: body.numero || formatInvoiceNumber(invoiceId, date),
+    numero: readOptionalString(body, 'numero', formatInvoiceNumber(invoiceId, date), 'Numéro'),
     date_emission: date,
     montant: invoiceAmount,
-    statut: body.statut || 'non payée',
+    statut: readOptionalEnum(body, 'statut', INVOICE_STATUSES, 'non payée', 'Statut'),
     createdAt: new Date(`${date}T00:00:00.000Z`).toISOString()
   });
 }
 
 async function getOrder(orderId) {
-  const response = await getJson(`${ORDER_SERVICE_URL}/view/${orderId}`, 'Impossible de récupérer la commande');
+  const response = await getJson(`${ORDER_SERVICE_URL}/view/${encodeURIComponent(orderId)}`, 'Impossible de récupérer la commande');
   return response.data;
 }
 
@@ -167,11 +155,4 @@ function formatInvoiceNumber(id, date) {
 
 function getOrderId(invoice) {
   return invoice.commande_id;
-}
-
-function validateInvoiceStatus(status) {
-  const allowedStatuses = ['non payée', 'partiellement payée', 'payée', 'annulée'];
-  if (!allowedStatuses.includes(status)) {
-    throw httpError(400, `Statut invalide. Valeurs: ${allowedStatuses.join(', ')}`);
-  }
 }

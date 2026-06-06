@@ -26,8 +26,8 @@ export function DashboardSidebar({ rowsByService }) {
             <AppIcon icon={APP_ICON} size={16} />
           </div>
           <div className="grid min-w-0 gap-0.5 group-data-[collapsible=icon]:hidden">
-            <span className="truncate text-sm font-black text-sidebar-foreground">Facturation</span>
-            <span className="truncate text-xs font-medium text-sidebar-foreground/60">Microservices</span>
+            <span className="truncate text-sm font-black text-sidebar-foreground">Billizy</span>
+            <span className="truncate text-xs font-medium text-sidebar-foreground/60">Gestion commerciale</span>
           </div>
         </div>
       </SidebarHeader>

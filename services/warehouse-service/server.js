@@ -1,7 +1,8 @@
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { asyncRoute, createServiceApp, httpError, listen, registerCommonHandlers, requireFields } from '../../shared/express.js';
+import { asyncRoute, createServiceApp, httpError, listen, registerCommonHandlers } from '../../shared/express.js';
 import { readSqliteSchema, SqliteStore, sqliteFilePath } from '../../shared/sqlite.js';
+import { readOptionalNumber, readOptionalString, readRequiredString } from '../../shared/validation.js';
 
 const serviceName = 'warehouse-service';
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -14,14 +15,12 @@ const warehouses = new SqliteStore(sqliteFilePath(__dirname, 'warehouses.sqlite'
 const app = createServiceApp(serviceName);
 
 app.post('/create', asyncRoute(async (req, res) => {
-  requireFields(req.body, ['nom', 'ville']);
-
   const warehouse = await warehouses.create({
     id: await warehouses.nextNumericId(),
-    nom: req.body.nom,
-    ville: req.body.ville,
-    adresse: req.body.adresse || null,
-    capacite: req.body.capacite === undefined ? null : Number(req.body.capacite),
+    nom: readRequiredString(req.body, 'nom', 'Nom'),
+    ville: readRequiredString(req.body, 'ville', 'Ville'),
+    adresse: readOptionalString(req.body, 'adresse', null, 'Adresse'),
+    capacite: readOptionalNumber(req.body, 'capacite', null, 'Capacité', { min: 0 }),
     createdAt: new Date().toISOString()
   });
 
@@ -65,10 +64,10 @@ app.patch('/edit/:id', asyncRoute(async (req, res) => {
   }
 
   const updatedWarehouse = await warehouses.update(req.params.id, {
-    nom: req.body.nom ?? warehouse.nom,
-    ville: req.body.ville ?? warehouse.ville,
-    adresse: req.body.adresse ?? warehouse.adresse ?? null,
-    capacite: req.body.capacite === undefined ? warehouse.capacite ?? null : Number(req.body.capacite)
+    nom: readOptionalString(req.body, 'nom', warehouse.nom, 'Nom'),
+    ville: readOptionalString(req.body, 'ville', warehouse.ville, 'Ville'),
+    adresse: readOptionalString(req.body, 'adresse', warehouse.adresse ?? null, 'Adresse'),
+    capacite: readOptionalNumber(req.body, 'capacite', warehouse.capacite ?? null, 'Capacité', { min: 0 })
   });
 
   res.json({

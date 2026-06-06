@@ -1,7 +1,8 @@
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { asyncRoute, createServiceApp, httpError, listen, registerCommonHandlers, requireFields } from '../../shared/express.js';
+import { asyncRoute, createServiceApp, httpError, listen, registerCommonHandlers } from '../../shared/express.js';
 import { readSqliteSchema, SqliteStore, sqliteFilePath } from '../../shared/sqlite.js';
+import { readOptionalString, readRequiredString } from '../../shared/validation.js';
 
 const serviceName = 'client-service';
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -14,8 +15,6 @@ const clients = new SqliteStore(sqliteFilePath(__dirname, 'clients.sqlite'), {
 const app = createServiceApp(serviceName);
 
 app.post('/create', asyncRoute(async (req, res) => {
-  requireFields(req.body, ['nom', 'prenom', 'telephone']);
-
   const client = await createClient(req.body);
 
   res.status(201).json({
@@ -58,11 +57,11 @@ app.patch('/edit/:id', asyncRoute(async (req, res) => {
   }
 
   const client = await clients.update(result.client.id, {
-    nom: req.body.nom ?? result.client.nom,
-    prenom: req.body.prenom ?? result.client.prenom ?? null,
-    telephone: req.body.telephone ?? result.client.telephone,
-    email: req.body.email ?? result.client.email ?? null,
-    adresse: req.body.adresse ?? result.client.adresse ?? null
+    nom: readOptionalString(req.body, 'nom', result.client.nom, 'Nom'),
+    prenom: readOptionalString(req.body, 'prenom', result.client.prenom ?? null, 'Prénom'),
+    telephone: readOptionalString(req.body, 'telephone', result.client.telephone, 'Téléphone'),
+    email: readOptionalString(req.body, 'email', result.client.email ?? null, 'Email'),
+    adresse: readOptionalString(req.body, 'adresse', result.client.adresse ?? null, 'Adresse')
   });
 
   res.json({
@@ -100,11 +99,11 @@ listen(app, serviceName, 3002);
 async function createClient(body) {
   return clients.create({
     id: await clients.nextNumericId(),
-    nom: body.nom,
-    prenom: body.prenom || null,
-    telephone: body.telephone,
-    email: body.email || null,
-    adresse: body.adresse || null,
+    nom: readRequiredString(body, 'nom', 'Nom'),
+    prenom: readRequiredString(body, 'prenom', 'Prénom'),
+    telephone: readRequiredString(body, 'telephone', 'Téléphone'),
+    email: readOptionalString(body, 'email', null, 'Email'),
+    adresse: readOptionalString(body, 'adresse', null, 'Adresse'),
     createdAt: new Date().toISOString()
   });
 }
