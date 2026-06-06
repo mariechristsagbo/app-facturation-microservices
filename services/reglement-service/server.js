@@ -2,9 +2,18 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { formatDate } from '../../shared/format-date.js';
 import { requireEnv } from '../../shared/env.js';
-import { asyncRoute, createServiceApp, httpError, listen, registerCommonHandlers, requireFields } from '../../shared/express.js';
+import { asyncRoute, createServiceApp, httpError, listen, registerCommonHandlers } from '../../shared/express.js';
 import { getJson, sendJson } from '../../shared/http.js';
 import { readSqliteSchema, SqliteStore, sqliteFilePath } from '../../shared/sqlite.js';
+import {
+  readOptionalDate,
+  readOptionalNumber,
+  readOptionalPositiveInteger,
+  readOptionalString,
+  readRequiredNumber,
+  readRequiredPositiveInteger,
+  readRequiredString
+} from '../../shared/validation.js';
 
 const serviceName = 'reglement-service';
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -61,11 +70,11 @@ app.patch('/edit/:id', asyncRoute(async (req, res) => {
   }
 
   const updatedPayment = await payments.update(req.params.id, {
-    facture_id: req.body.facture_id ?? payment.facture_id,
-    montant: req.body.montant === undefined ? payment.montant : Number(req.body.montant),
-    mode: req.body.mode ?? payment.mode,
-    date: req.body.date ?? payment.date,
-    caisse_id: req.body.caisse_id ?? payment.caisse_id
+    facture_id: readOptionalPositiveInteger(req.body, 'facture_id', payment.facture_id, 'Facture'),
+    montant: readOptionalNumber(req.body, 'montant', payment.montant, 'Montant', { minExclusive: 0 }),
+    mode: readOptionalString(req.body, 'mode', payment.mode, 'Mode'),
+    date: readOptionalDate(req.body, 'date', payment.date, 'Date'),
+    caisse_id: readOptionalPositiveInteger(req.body, 'caisse_id', payment.caisse_id, 'Caisse')
   });
 
   res.json({
@@ -98,14 +107,8 @@ registerCommonHandlers(app, serviceName);
 listen(app, serviceName, 3007);
 
 async function createPayment(body) {
-  requireFields(body, ['facture_id', 'montant', 'mode']);
-
-  const invoiceId = body.facture_id;
-
-  const amount = Number(body.montant);
-  if (!Number.isFinite(amount) || amount <= 0) {
-    throw httpError(400, 'Le montant doit être positif');
-  }
+  const invoiceId = readRequiredPositiveInteger(body, 'facture_id', 'Facture');
+  const amount = readRequiredNumber(body, 'montant', 'Montant', { minExclusive: 0 });
 
   const invoice = await getInvoice(invoiceId);
   const remaining = getRemainingAmount(invoice, await payments.all());
@@ -114,15 +117,15 @@ async function createPayment(body) {
     throw httpError(400, `Montant trop élevé. Reste à payer: ${remaining}`);
   }
 
-  const date = body.date || formatDate();
+  const date = readOptionalDate(body, 'date', formatDate(), 'Date');
   const payment = await payments.create({
     id: await payments.nextNumericId(),
     facture_id: Number(invoice.id ?? invoiceId),
     montant: amount,
-    mode: body.mode,
+    mode: readRequiredString(body, 'mode', 'Mode'),
     date,
-    caisse_id: body.caisse_id ?? null,
-    reference: body.reference || null,
+    caisse_id: readOptionalPositiveInteger(body, 'caisse_id', null, 'Caisse'),
+    reference: readOptionalString(body, 'reference', null, 'Référence'),
     createdAt: new Date(`${date}T00:00:00.000Z`).toISOString()
   });
 
@@ -131,7 +134,7 @@ async function createPayment(body) {
 }
 
 async function getInvoice(invoiceId) {
-  const response = await getJson(`${INVOICE_SERVICE_URL}/view/${invoiceId}`, 'Impossible de récupérer la facture');
+  const response = await getJson(`${INVOICE_SERVICE_URL}/view/${encodeURIComponent(invoiceId)}`, 'Impossible de récupérer la facture');
   return response.data;
 }
 
@@ -139,7 +142,7 @@ async function updateInvoiceStatus(invoice, amount, remaining) {
   const status = amount === remaining ? 'payée' : 'partiellement payée';
 
   await sendJson(
-    `${INVOICE_SERVICE_URL}/edit/${invoice.id}`,
+    `${INVOICE_SERVICE_URL}/edit/${encodeURIComponent(invoice.id)}`,
     'PATCH',
     { statut: status },
     'Impossible de mettre à jour la facture'

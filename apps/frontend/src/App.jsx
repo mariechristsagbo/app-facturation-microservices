@@ -29,13 +29,12 @@ export default function App() {
     <SidebarProvider>
       <DashboardSidebar rowsByService={rowsByService} />
 
-      <SidebarInset className="bg-zinc-50">
-        <main className="mx-auto min-h-screen w-full max-w-6xl px-4 py-6 text-zinc-950 md:px-6 max-sm:py-4">
+      <SidebarInset className="bg-white">
+        <main className="mx-auto min-h-screen w-full max-w-6xl bg-white px-4 py-6 text-zinc-950 md:px-6 max-sm:py-4">
           <header className="mb-5 flex items-center justify-between gap-4">
             <div className="flex min-w-0 items-center gap-3">
               <SidebarTrigger className="md:hidden" />
               <div className="min-w-0">
-                <p className="text-xs font-bold uppercase text-zinc-500">Facturation microservices</p>
                 <h1 className="mt-1 text-3xl font-black leading-tight text-zinc-950 md:text-4xl">{activeService.label}</h1>
               </div>
             </div>

@@ -1,4 +1,7 @@
+import { useEffect, useMemo } from 'react';
+import { zodResolver } from '@hookform/resolvers/zod';
 import { CheckmarkCircle01Icon, Delete02Icon } from '@hugeicons/core-free-icons';
+import { useForm } from 'react-hook-form';
 import { AppIcon } from '@/components/app/app-icon.jsx';
 import { JsonBlock } from '@/components/app/json-block.jsx';
 import {
@@ -23,33 +26,57 @@ import {
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { schemaForService } from './module-payload.js';
 
-export function FormDialog({ busy, dialog, onOpenChange, onSubmit, onUpdate, service }) {
+export function FormDialog({ busy, dialog, onOpenChange, onSubmit, service }) {
   const title = dialog.mode === 'create' ? `Ajouter ${service.label.toLowerCase()}` : `Modifier ${service.label.toLowerCase()}`;
+  const schema = useMemo(
+    () => schemaForService(service, { partial: dialog.mode === 'edit' }),
+    [dialog.mode, service]
+  );
+  const form = useForm({
+    defaultValues: dialog.values,
+    resolver: zodResolver(schema, undefined, { raw: true })
+  });
+
+  useEffect(() => {
+    form.reset(dialog.values);
+  }, [dialog.id, dialog.mode, dialog.open, dialog.values, form, service.key]);
+
+  const handleSubmit = form.handleSubmit((values) => onSubmit(values));
 
   return (
     <Dialog open={dialog.open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-2xl">
-        <form className="grid gap-4" onSubmit={onSubmit}>
+        <form className="grid gap-4" noValidate onSubmit={handleSubmit}>
           <DialogHeader>
             <DialogTitle>{title}</DialogTitle>
-            <DialogDescription>Les champs marqués d’un astérisque sont obligatoires.</DialogDescription>
+            <DialogDescription className="sr-only">Saisir les informations puis valider le formulaire.</DialogDescription>
           </DialogHeader>
 
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-            {service.fields.map((field) => (
-              <div className="grid gap-1.5" key={field.name}>
-                <Label htmlFor={`${service.key}-${field.name}`}>{field.label}{field.required ? ' *' : ''}</Label>
-                <Input
-                  disabled={busy}
-                  id={`${service.key}-${field.name}`}
-                  onChange={(event) => onUpdate(field.name, event.target.value)}
-                  required={Boolean(field.required)}
-                  type={field.type || 'text'}
-                  value={dialog.values[field.name] ?? ''}
-                />
-              </div>
-            ))}
+            {service.fields.map((field) => {
+              const fieldError = form.formState.errors[field.name];
+              const inputId = `${service.key}-${field.name}`;
+              const errorId = `${inputId}-error`;
+
+              return (
+                <div className="grid gap-1.5" key={field.name}>
+                  <Label htmlFor={inputId}>{field.label}{field.required ? ' *' : ''}</Label>
+                  <Input
+                    aria-describedby={fieldError ? errorId : undefined}
+                    aria-invalid={Boolean(fieldError)}
+                    disabled={busy}
+                    id={inputId}
+                    type={field.type || 'text'}
+                    {...form.register(field.name)}
+                  />
+                  {fieldError ? (
+                    <p className="text-xs font-medium text-destructive" id={errorId}>{fieldError.message}</p>
+                  ) : null}
+                </div>
+              );
+            })}
           </div>
 
           <DialogFooter>

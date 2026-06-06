@@ -111,15 +111,15 @@ export function ModulePage({ busy, onCreate, onDelete, onEdit, onEnsureList, onV
     }
   }
 
-  async function handleFormSubmit(event) {
-    event.preventDefault();
+  async function handleFormSubmit(values) {
     const success = formDialog.mode === 'create'
-      ? await onCreate(service, formDialog.values)
-      : await onEdit(service, formDialog.id, formDialog.values);
+      ? await onCreate(service, values)
+      : await onEdit(service, formDialog.id, values);
 
     if (success) {
       setFormDialog((current) => ({ ...current, open: false }));
     }
+    return success;
   }
 
   async function handleDelete() {
@@ -131,13 +131,6 @@ export function ModulePage({ busy, onCreate, onDelete, onEdit, onEnsureList, onV
     if (success) {
       setDeleteRow(null);
     }
-  }
-
-  function updateFormValue(name, value) {
-    setFormDialog((current) => ({
-      ...current,
-      values: { ...current.values, [name]: value }
-    }));
   }
 
   const visibleRows = table.getRowModel().rows;
@@ -168,7 +161,7 @@ export function ModulePage({ busy, onCreate, onDelete, onEdit, onEnsureList, onV
             <Table>
               <TableHeader>
                 {table.getHeaderGroups().map((headerGroup) => (
-                  <TableRow className="bg-zinc-50 hover:bg-zinc-50" key={headerGroup.id}>
+                  <TableRow className="bg-white hover:bg-white" key={headerGroup.id}>
                     {headerGroup.headers.map((header) => (
                       <TableHead className={header.column.id === 'actions' ? 'w-32 text-right' : ''} key={header.id}>
                         {header.isPlaceholder ? null : (
@@ -230,7 +223,6 @@ export function ModulePage({ busy, onCreate, onDelete, onEdit, onEnsureList, onV
         dialog={formDialog}
         onOpenChange={(open) => setFormDialog((current) => ({ ...current, open }))}
         onSubmit={handleFormSubmit}
-        onUpdate={updateFormValue}
         service={service}
       />
 

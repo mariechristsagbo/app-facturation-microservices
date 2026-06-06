@@ -1,7 +1,8 @@
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { asyncRoute, createServiceApp, httpError, listen, registerCommonHandlers, requireFields } from '../../shared/express.js';
+import { asyncRoute, createServiceApp, httpError, listen, registerCommonHandlers } from '../../shared/express.js';
 import { readSqliteSchema, SqliteStore, sqliteFilePath } from '../../shared/sqlite.js';
+import { readOptionalNumber, readOptionalString, readRequiredString } from '../../shared/validation.js';
 
 const serviceName = 'cash-register-service';
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -14,14 +15,12 @@ const cashRegisters = new SqliteStore(sqliteFilePath(__dirname, 'cash-registers.
 const app = createServiceApp(serviceName);
 
 app.post('/create', asyncRoute(async (req, res) => {
-  requireFields(req.body, ['libelle']);
-
   const cashRegister = await cashRegisters.create({
     id: await cashRegisters.nextNumericId(),
-    libelle: req.body.libelle,
-    solde: req.body.solde === undefined ? 0 : Number(req.body.solde),
-    devise: req.body.devise || 'XOF',
-    responsable: req.body.responsable || null,
+    libelle: readRequiredString(req.body, 'libelle', 'Libellé'),
+    solde: readOptionalNumber(req.body, 'solde', 0, 'Solde'),
+    devise: readOptionalString(req.body, 'devise', 'XOF', 'Devise'),
+    responsable: readOptionalString(req.body, 'responsable', null, 'Responsable'),
     createdAt: new Date().toISOString()
   });
 
@@ -65,10 +64,10 @@ app.patch('/edit/:id', asyncRoute(async (req, res) => {
   }
 
   const updatedCashRegister = await cashRegisters.update(req.params.id, {
-    libelle: req.body.libelle ?? cashRegister.libelle,
-    solde: req.body.solde === undefined ? cashRegister.solde : Number(req.body.solde),
-    devise: req.body.devise ?? cashRegister.devise ?? 'XOF',
-    responsable: req.body.responsable ?? cashRegister.responsable ?? null
+    libelle: readOptionalString(req.body, 'libelle', cashRegister.libelle, 'Libellé'),
+    solde: readOptionalNumber(req.body, 'solde', cashRegister.solde, 'Solde'),
+    devise: readOptionalString(req.body, 'devise', cashRegister.devise ?? 'XOF', 'Devise'),
+    responsable: readOptionalString(req.body, 'responsable', cashRegister.responsable ?? null, 'Responsable')
   });
 
   res.json({
