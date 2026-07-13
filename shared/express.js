@@ -1,11 +1,13 @@
 import express from 'express';
 import helmet from 'helmet';
+import { getRequestId, requestContextMiddleware } from './request-context.js';
 
 export function createServiceApp(serviceName) {
   const app = express();
 
   app.disable('x-powered-by');
   app.use(helmet());
+  app.use(requestContextMiddleware);
   app.use(express.json({ limit: '100kb' }));
   app.get('/health', (req, res) => {
     res.json({ service: serviceName, status: 'ok' });
@@ -39,10 +41,11 @@ export function registerCommonHandlers(app, serviceName) {
     res.status(404).json({ service: serviceName, message: 'Route introuvable' });
   });
 
-  app.use((error, req, res, next) => {
+  app.use((error, req, res, _next) => {
     const status = error.status || 500;
     if (status >= 500) {
-      console.error(`[${serviceName}]`, error);
+      const requestId = getRequestId();
+      console.error(`[${serviceName}]${requestId ? ` [${requestId}]` : ''}`, error);
     }
 
     res.status(status).json(errorResponseBody(serviceName, error));

@@ -9,6 +9,8 @@ services:
     <<: *service-build
     container_name: facturation-client-service
     command: node services/client-service/server.js
+    environment:
+      PORT: 3002
     volumes:
       - ./services/client-service/data:/app/services/client-service/data
     networks:
@@ -19,6 +21,8 @@ services:
     <<: *service-build
     container_name: facturation-product-service
     command: node services/product-service/server.js
+    environment:
+      PORT: 3003
     volumes:
       - ./services/product-service/data:/app/services/product-service/data
     networks:
@@ -30,11 +34,14 @@ services:
     container_name: facturation-order-service
     command: node services/order-service/server.js
     environment:
+      PORT: 3005
       CLIENT_SERVICE_URL: http://client-service:3002
       PRODUCT_SERVICE_URL: http://product-service:3003
     depends_on:
-      - client-service
-      - product-service
+      client-service:
+        condition: service_healthy
+      product-service:
+        condition: service_healthy
     volumes:
       - ./services/order-service/data:/app/services/order-service/data
     networks:
@@ -46,9 +53,11 @@ services:
     container_name: facturation-invoice-service
     command: node services/invoice-service/server.js
     environment:
+      PORT: 3006
       ORDER_SERVICE_URL: http://order-service:3005
     depends_on:
-      - order-service
+      order-service:
+        condition: service_healthy
     volumes:
       - ./services/invoice-service/data:/app/services/invoice-service/data
     networks:
@@ -60,9 +69,11 @@ services:
     container_name: facturation-reglement-service
     command: node services/reglement-service/server.js
     environment:
+      PORT: 3007
       INVOICE_SERVICE_URL: http://invoice-service:3006
     depends_on:
-      - invoice-service
+      invoice-service:
+        condition: service_healthy
     volumes:
       - ./services/reglement-service/data:/app/services/reglement-service/data
     networks:
@@ -73,6 +84,8 @@ services:
     <<: *service-build
     container_name: facturation-cash-register-service
     command: node services/cash-register-service/server.js
+    environment:
+      PORT: 3008
     volumes:
       - ./services/cash-register-service/data:/app/services/cash-register-service/data
     networks:
@@ -83,6 +96,8 @@ services:
     <<: *service-build
     container_name: facturation-warehouse-service
     command: node services/warehouse-service/server.js
+    environment:
+      PORT: 3009
     volumes:
       - ./services/warehouse-service/data:/app/services/warehouse-service/data
     networks:

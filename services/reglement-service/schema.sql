@@ -6,5 +6,6 @@ CREATE TABLE IF NOT EXISTS payments (
   date TEXT NOT NULL,
   caisse_id INTEGER,
   reference TEXT,
+  idempotency_key TEXT,
   createdAt TEXT NOT NULL
 );

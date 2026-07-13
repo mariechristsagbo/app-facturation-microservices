@@ -16,8 +16,8 @@ services:
       - --entrypoints.web.http.redirections.entrypoint.scheme=https
       - --entrypoints.websecure.address=:443
     ports:
-      - "8080:80"
-      - "8443:443"
+      - '8080:80'
+      - '8443:443'
     volumes:
       - /etc/localtime:/etc/localtime:ro
       - ./infra/traefik/dynamic.yml:/etc/traefik/dynamic.yml:ro

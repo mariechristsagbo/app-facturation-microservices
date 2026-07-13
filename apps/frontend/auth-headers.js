@@ -18,5 +18,10 @@ export function identityFromAuthHeaders(req, options = {}) {
 }
 
 function splitHeader(value) {
-  return value ? value.split(',').map((item) => item.trim()).filter(Boolean) : [];
+  return value
+    ? value
+        .split(',')
+        .map((item) => item.trim())
+        .filter(Boolean)
+    : [];
 }

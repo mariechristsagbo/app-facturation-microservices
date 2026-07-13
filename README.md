@@ -16,14 +16,14 @@ Billizy couvre les opérations principales d'une petite application de gestion c
 
 ## Fonctionnalités
 
-| Domaine | Fonctionnalités |
-| --- | --- |
-| Clients | Création, consultation, modification et suppression de clients. |
-| Produits | Gestion du catalogue, des prix, catégories et références. |
-| Factures | Création et consultation des factures liées aux commandes. |
+| Domaine    | Fonctionnalités                                                        |
+| ---------- | ---------------------------------------------------------------------- |
+| Clients    | Création, consultation, modification et suppression de clients.        |
+| Produits   | Gestion du catalogue, des prix, catégories et références.              |
+| Factures   | Création et consultation des factures liées aux commandes.             |
 | Règlements | Enregistrement des paiements, modes de règlement et caisses associées. |
-| Caisses | Suivi des caisses, devises, responsables et soldes. |
-| Entrepôts | Gestion des lieux de stockage, villes, adresses et capacités. |
+| Caisses    | Suivi des caisses, devises, responsables et soldes.                    |
+| Entrepôts  | Gestion des lieux de stockage, villes, adresses et capacités.          |
 
 Le module commandes existe côté API, mais il n'est pas affiché dans la sidebar frontend pour garder l'interface de test plus claire.
 
@@ -47,15 +47,15 @@ Ces captures donnent un aperçu rapide de l'interface et de la stack sécurisée
 
 ## Stack technique
 
-| Couche | Technologies |
-| --- | --- |
-| Frontend | React, Vite, React Router, shadcn/ui, Tailwind CSS, Hugeicons, TanStack Table |
-| Formulaires | React Hook Form, Zod, `@hookform/resolvers` |
-| Backend | Node.js, Express |
-| Données | SQLite par microservice |
-| Sécurité | Traefik, Authelia, LLDAP, Helmet |
-| Tests | `node:test`, `npm audit`, build Vite |
-| Conteneurs | Docker Compose |
+| Couche      | Technologies                                                                  |
+| ----------- | ----------------------------------------------------------------------------- |
+| Frontend    | React, Vite, React Router, shadcn/ui, Tailwind CSS, Hugeicons, TanStack Table |
+| Formulaires | React Hook Form, Zod, `@hookform/resolvers`                                   |
+| Backend     | Node.js, Express                                                              |
+| Données     | SQLite par microservice                                                       |
+| Sécurité    | Traefik, Authelia, LLDAP, Helmet                                              |
+| Tests       | `node:test`, `npm audit`, build Vite                                          |
+| Conteneurs  | Docker Compose                                                                |
 
 ## Architecture
 
@@ -129,12 +129,12 @@ npm run auth:up
 
 ## URLs locales
 
-| URL | Usage |
-| --- | --- |
-| `https://app.facturation.test:8443` | Application Billizy |
-| `https://app.facturation.test:8443/auth` | Portail Authelia |
-| `https://admin.facturation.test:8443` | Administration LLDAP |
-| `https://traefik.facturation.test:8443` | Dashboard Traefik |
+| URL                                      | Usage                |
+| ---------------------------------------- | -------------------- |
+| `https://app.facturation.test:8443`      | Application Billizy  |
+| `https://app.facturation.test:8443/auth` | Portail Authelia     |
+| `https://admin.facturation.test:8443`    | Administration LLDAP |
+| `https://traefik.facturation.test:8443`  | Dashboard Traefik    |
 
 Identifiants de démonstration LLDAP :
 
@@ -152,17 +152,17 @@ openssl rand -hex 32
 
 ## Scripts utiles
 
-| Script | Description |
-| --- | --- |
-| `npm run auth:certs` | Génère le certificat TLS local pour `*.facturation.test`. |
-| `npm run auth:config` | Valide la configuration Docker Compose complète. |
-| `npm run auth:up` | Build et lance Traefik, Authelia, LLDAP, le frontend et les microservices. |
-| `npm run auth:down` | Arrête la stack Docker. |
-| `npm run auth:ps` | Affiche l'état des conteneurs. |
-| `npm run dev:frontend` | Lance le frontend Vite en développement. |
-| `npm run build:frontend` | Compile le frontend. |
-| `npm test` | Lance les tests automatisés. |
-| `npm start` | Lance les microservices en local sans gateway ni authentification. |
+| Script                   | Description                                                                |
+| ------------------------ | -------------------------------------------------------------------------- |
+| `npm run auth:certs`     | Génère le certificat TLS local pour `*.facturation.test`.                  |
+| `npm run auth:config`    | Valide la configuration Docker Compose complète.                           |
+| `npm run auth:up`        | Build et lance Traefik, Authelia, LLDAP, le frontend et les microservices. |
+| `npm run auth:down`      | Arrête la stack Docker.                                                    |
+| `npm run auth:ps`        | Affiche l'état des conteneurs.                                             |
+| `npm run dev:frontend`   | Lance le frontend Vite en développement.                                   |
+| `npm run build:frontend` | Compile le frontend.                                                       |
+| `npm test`               | Lance les tests automatisés.                                               |
+| `npm start`              | Lance les microservices en local sans gateway ni authentification.         |
 
 ## Développement
 
@@ -208,25 +208,35 @@ Ce choix garde une séparation claire entre les domaines métier tout en évitan
 
 Le frontend appelle les APIs via Traefik avec le préfixe `/api/:service`. Traefik retire ce préfixe avant de transmettre la requête au microservice cible.
 
-| URL publique | Cible interne |
-| --- | --- |
-| `/api/client/list` | `http://client-service:3002/list` |
-| `/api/produit/list` | `http://product-service:3003/list` |
-| `/api/commande/list` | `http://order-service:3005/list` |
-| `/api/facture/list` | `http://invoice-service:3006/list` |
-| `/api/reglement/list` | `http://reglement-service:3007/list` |
-| `/api/caisse/list` | `http://cash-register-service:3008/list` |
-| `/api/entrepot/list` | `http://warehouse-service:3009/list` |
+| URL publique          | Cible interne                            |
+| --------------------- | ---------------------------------------- |
+| `/api/client/list`    | `http://client-service:3002/list`        |
+| `/api/produit/list`   | `http://product-service:3003/list`       |
+| `/api/commande/list`  | `http://order-service:3005/list`         |
+| `/api/facture/list`   | `http://invoice-service:3006/list`       |
+| `/api/reglement/list` | `http://reglement-service:3007/list`     |
+| `/api/caisse/list`    | `http://cash-register-service:3008/list` |
+| `/api/entrepot/list`  | `http://warehouse-service:3009/list`     |
 
 Chaque microservice suit le même contrat CRUD :
 
-| Action | Méthode | Endpoint natif |
-| --- | --- | --- |
-| Créer | `POST` | `/create` |
-| Lister | `GET` | `/list` |
-| Voir | `GET` | `/view/:id` |
-| Modifier | `PATCH` | `/edit/:id` |
-| Supprimer | `DELETE` | `/delete/:id` |
+| Action    | Méthode  | Endpoint natif |
+| --------- | -------- | -------------- |
+| Créer     | `POST`   | `/create`      |
+| Lister    | `GET`    | `/list`        |
+| Voir      | `GET`    | `/view/:id`    |
+| Modifier  | `PATCH`  | `/edit/:id`    |
+| Supprimer | `DELETE` | `/delete/:id`  |
+
+### Résilience des échanges
+
+- Les appels interservices ont un délai maximal configurable avec `HTTP_TIMEOUT_MS`.
+- Les lectures `GET` sont retentées sur les erreurs réseau et les réponses transitoires `5xx` ; les écritures ne sont jamais retentées automatiquement.
+- Un `X-Request-Id` est propagé entre le navigateur et les services pour corréler les erreurs.
+- La création d'un règlement accepte `Idempotency-Key` afin qu'une même requête rejouée ne crée pas de doublon.
+- Les changements de règlement enregistrent, dans la même transaction SQLite, une synchronisation du statut de la facture. Si le service facture est indisponible, cette synchronisation reste en attente et est rejouée périodiquement.
+
+La cohérence entre règlements et factures est donc éventuelle en cas de panne réseau : le règlement reste la source de vérité du montant payé et le statut de la facture converge lorsque le service redevient disponible.
 
 Exemple de création client :
 
@@ -253,6 +263,7 @@ Le frontend expose aussi `/api/me`, qui lit les headers `Remote-*` transmis par 
 - Authelia protège l'application, les APIs, l'administration LLDAP et le dashboard Traefik.
 - LLDAP centralise les utilisateurs de démonstration.
 - Les services Express utilisent Helmet et une gestion d'erreurs commune.
+- Les conteneurs métier exposent un healthcheck et les services dépendants attendent leur disponibilité.
 - Les erreurs inattendues côté backend sont masquées pour éviter d'exposer des détails internes.
 - Les validations backend sont standardisées avec des helpers partagés.
 - Les formulaires frontend sont validés avec Zod et React Hook Form.
@@ -261,10 +272,10 @@ Le frontend expose aussi `/api/me`, qui lit les headers `Remote-*` transmis par 
 Commandes de vérification :
 
 ```bash
-npm test
-npm run build:frontend
-npm audit
+npm run check
 ```
+
+Cette commande exécute ESLint, la vérification Prettier, les tests, le build frontend et `npm audit`.
 
 ## Notes locales
 

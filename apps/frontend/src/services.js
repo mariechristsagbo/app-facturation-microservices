@@ -1,12 +1,4 @@
-export const SERVICE_ORDER = [
-  'client',
-  'produit',
-  'commande',
-  'facture',
-  'reglement',
-  'caisse',
-  'entrepot'
-];
+export const SERVICE_ORDER = ['client', 'produit', 'commande', 'facture', 'reglement', 'caisse', 'entrepot'];
 
 export const SERVICE_LABELS = {
   client: 'Clients',

@@ -39,4 +39,7 @@ COPY --from=builder /app/apps/frontend/server.js apps/frontend/server.js
 COPY --from=builder /app/apps/frontend/auth-headers.js apps/frontend/auth-headers.js
 WORKDIR /app/apps/frontend
 
+HEALTHCHECK --interval=10s --timeout=3s --start-period=5s --retries=5 \
+  CMD node -e "fetch('http://127.0.0.1:' + process.env.PORT + '/health').then((response) => { if (!response.ok) process.exit(1); }).catch(() => process.exit(1))"
+
 CMD ["npm", "run", "start"]

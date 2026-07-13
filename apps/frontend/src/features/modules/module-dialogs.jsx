@@ -29,11 +29,9 @@ import { Label } from '@/components/ui/label';
 import { schemaForService } from './module-payload.js';
 
 export function FormDialog({ busy, dialog, onOpenChange, onSubmit, service }) {
-  const title = dialog.mode === 'create' ? `Ajouter ${service.label.toLowerCase()}` : `Modifier ${service.label.toLowerCase()}`;
-  const schema = useMemo(
-    () => schemaForService(service, { partial: dialog.mode === 'edit' }),
-    [dialog.mode, service]
-  );
+  const title =
+    dialog.mode === 'create' ? `Ajouter ${service.label.toLowerCase()}` : `Modifier ${service.label.toLowerCase()}`;
+  const schema = useMemo(() => schemaForService(service, { partial: dialog.mode === 'edit' }), [dialog.mode, service]);
   const form = useForm({
     defaultValues: dialog.values,
     resolver: zodResolver(schema, undefined, { raw: true })
@@ -51,7 +49,9 @@ export function FormDialog({ busy, dialog, onOpenChange, onSubmit, service }) {
         <form className="grid gap-4" noValidate onSubmit={handleSubmit}>
           <DialogHeader>
             <DialogTitle>{title}</DialogTitle>
-            <DialogDescription className="sr-only">Saisir les informations puis valider le formulaire.</DialogDescription>
+            <DialogDescription className="sr-only">
+              Saisir les informations puis valider le formulaire.
+            </DialogDescription>
           </DialogHeader>
 
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
@@ -62,7 +62,10 @@ export function FormDialog({ busy, dialog, onOpenChange, onSubmit, service }) {
 
               return (
                 <div className="grid gap-1.5" key={field.name}>
-                  <Label htmlFor={inputId}>{field.label}{field.required ? ' *' : ''}</Label>
+                  <Label htmlFor={inputId}>
+                    {field.label}
+                    {field.required ? ' *' : ''}
+                  </Label>
                   <Input
                     aria-describedby={fieldError ? errorId : undefined}
                     aria-invalid={Boolean(fieldError)}
@@ -72,7 +75,9 @@ export function FormDialog({ busy, dialog, onOpenChange, onSubmit, service }) {
                     {...form.register(field.name)}
                   />
                   {fieldError ? (
-                    <p className="text-xs font-medium text-destructive" id={errorId}>{fieldError.message}</p>
+                    <p className="text-xs font-medium text-destructive" id={errorId}>
+                      {fieldError.message}
+                    </p>
                   ) : null}
                 </div>
               );
@@ -80,7 +85,9 @@ export function FormDialog({ busy, dialog, onOpenChange, onSubmit, service }) {
           </div>
 
           <DialogFooter>
-            <Button disabled={busy} type="button" variant="outline" onClick={() => onOpenChange(false)}>Annuler</Button>
+            <Button disabled={busy} type="button" variant="outline" onClick={() => onOpenChange(false)}>
+              Annuler
+            </Button>
             <Button disabled={busy} type="submit">
               {dialog.mode === 'edit' ? <AppIcon icon={CheckmarkCircle01Icon} size={15} /> : null}
               {dialog.mode === 'create' ? 'Ajouter' : 'Enregistrer'}
@@ -135,7 +142,9 @@ export function DeleteDialog({ busy, onConfirm, onOpenChange, row, service }) {
         </AlertDialogHeader>
         <AlertDialogFooter>
           <AlertDialogCancel disabled={busy}>Annuler</AlertDialogCancel>
-          <AlertDialogAction disabled={busy} onClick={onConfirm} variant="destructive">Supprimer</AlertDialogAction>
+          <AlertDialogAction disabled={busy} onClick={onConfirm} variant="destructive">
+            Supprimer
+          </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>
     </AlertDialog>

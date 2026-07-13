@@ -56,6 +56,22 @@ export class SqliteStore {
   }
 
   async create(record) {
+    this.insert(record);
+    return this.findById(record.id);
+  }
+
+  async createWithGeneratedId(buildRecord) {
+    const record = runTransaction(this.db, () => {
+      const id = this.nextNumericIdSync();
+      const generatedRecord = buildRecord(id);
+      this.insert(generatedRecord);
+      return generatedRecord;
+    });
+
+    return this.findById(record.id);
+  }
+
+  insert(record) {
     const columns = this.columns.filter((column) => Object.hasOwn(record, column));
     const placeholders = columns.map(() => '?').join(', ');
     const values = columns.map((column) => toStorageValue(record[column]));
@@ -63,8 +79,6 @@ export class SqliteStore {
     this.db
       .prepare(`INSERT INTO ${this.tableName} (${columns.map(quoteIdentifier).join(', ')}) VALUES (${placeholders})`)
       .run(...values);
-
-    return this.findById(record.id);
   }
 
   async update(id, patch) {
@@ -91,6 +105,10 @@ export class SqliteStore {
   }
 
   async nextNumericId() {
+    return this.nextNumericIdSync();
+  }
+
+  nextNumericIdSync() {
     const row = this.db.prepare(`SELECT COALESCE(MAX(id), 0) + 1 AS id FROM ${this.tableName}`).get();
     return row.id;
   }

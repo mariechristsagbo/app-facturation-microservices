@@ -6,3 +6,5 @@ CREATE TABLE IF NOT EXISTS products (
   prix REAL NOT NULL,
   createdAt TEXT NOT NULL
 );
+
+CREATE UNIQUE INDEX IF NOT EXISTS idx_products_reference ON products(reference);

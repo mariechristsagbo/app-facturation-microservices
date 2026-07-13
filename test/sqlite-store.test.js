@@ -31,12 +31,12 @@ test('SqliteStore creates an empty database and supports CRUD operations', async
   assert.deepEqual(await store.all(), []);
   assert.equal(await store.nextNumericId(), 1);
 
-  const created = await store.create({
-    id: await store.nextNumericId(),
+  const created = await store.createWithGeneratedId((id) => ({
+    id,
     name: 'Premier',
     amount: 1500,
     createdAt: '2026-06-04T00:00:00.000Z'
-  });
+  }));
 
   assert.deepEqual(created, {
     id: 1,

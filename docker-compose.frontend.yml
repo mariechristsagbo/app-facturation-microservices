@@ -8,7 +8,7 @@ services:
     environment:
       NODE_ENV: production
       PORT: 5173
-      TRUST_PROXY_AUTH_HEADERS: "true"
+      TRUST_PROXY_AUTH_HEADERS: 'true'
     networks:
       - proxy
 

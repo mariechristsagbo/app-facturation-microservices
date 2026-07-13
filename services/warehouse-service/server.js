@@ -14,87 +14,102 @@ const warehouses = new SqliteStore(sqliteFilePath(__dirname, 'warehouses.sqlite'
 
 const app = createServiceApp(serviceName);
 
-app.post('/create', asyncRoute(async (req, res) => {
-  const warehouse = await warehouses.create({
-    id: await warehouses.nextNumericId(),
-    nom: readRequiredString(req.body, 'nom', 'Nom'),
-    ville: readRequiredString(req.body, 'ville', 'Ville'),
-    adresse: readOptionalString(req.body, 'adresse', null, 'Adresse'),
-    capacite: readOptionalNumber(req.body, 'capacite', null, 'Capacité', { min: 0 }),
-    createdAt: new Date().toISOString()
-  });
+app.post(
+  '/create',
+  asyncRoute(async (req, res) => {
+    const warehouse = await warehouses.createWithGeneratedId((id) => ({
+      id,
+      nom: readRequiredString(req.body, 'nom', 'Nom'),
+      ville: readRequiredString(req.body, 'ville', 'Ville'),
+      adresse: readOptionalString(req.body, 'adresse', null, 'Adresse'),
+      capacite: readOptionalNumber(req.body, 'capacite', null, 'Capacité', { min: 0 }),
+      createdAt: new Date().toISOString()
+    }));
 
-  res.status(201).json({
-    service: 'entrepot',
-    endpoint: '/create',
-    status: 'success',
-    message: 'Entrepôt créé avec succès',
-    data: formatWarehouseSummary(warehouse)
-  });
-}));
+    res.status(201).json({
+      service: 'entrepot',
+      endpoint: '/create',
+      status: 'success',
+      message: 'Entrepôt créé avec succès',
+      data: formatWarehouseSummary(warehouse)
+    });
+  })
+);
 
-app.get('/list', asyncRoute(async (req, res) => {
-  const data = await warehouses.all();
+app.get(
+  '/list',
+  asyncRoute(async (req, res) => {
+    const data = await warehouses.all();
 
-  res.json({
-    service: 'entrepot',
-    endpoint: '/list',
-    count: data.length,
-    data: data.map(formatWarehouseSummary)
-  });
-}));
+    res.json({
+      service: 'entrepot',
+      endpoint: '/list',
+      count: data.length,
+      data: data.map(formatWarehouseSummary)
+    });
+  })
+);
 
-app.get('/view/:id', asyncRoute(async (req, res) => {
-  const warehouse = await warehouses.findById(req.params.id);
-  if (!warehouse) {
-    throw httpError(404, 'Entrepôt introuvable');
-  }
+app.get(
+  '/view/:id',
+  asyncRoute(async (req, res) => {
+    const warehouse = await warehouses.findById(req.params.id);
+    if (!warehouse) {
+      throw httpError(404, 'Entrepôt introuvable');
+    }
 
-  res.json({
-    service: 'entrepot',
-    endpoint: `/view/${req.params.id}`,
-    data: formatWarehouseDetails(warehouse)
-  });
-}));
+    res.json({
+      service: 'entrepot',
+      endpoint: `/view/${req.params.id}`,
+      data: formatWarehouseDetails(warehouse)
+    });
+  })
+);
 
-app.patch('/edit/:id', asyncRoute(async (req, res) => {
-  const warehouse = await warehouses.findById(req.params.id);
-  if (!warehouse) {
-    throw httpError(404, 'Entrepôt introuvable');
-  }
+app.patch(
+  '/edit/:id',
+  asyncRoute(async (req, res) => {
+    const warehouse = await warehouses.findById(req.params.id);
+    if (!warehouse) {
+      throw httpError(404, 'Entrepôt introuvable');
+    }
 
-  const updatedWarehouse = await warehouses.update(req.params.id, {
-    nom: readOptionalString(req.body, 'nom', warehouse.nom, 'Nom'),
-    ville: readOptionalString(req.body, 'ville', warehouse.ville, 'Ville'),
-    adresse: readOptionalString(req.body, 'adresse', warehouse.adresse ?? null, 'Adresse'),
-    capacite: readOptionalNumber(req.body, 'capacite', warehouse.capacite ?? null, 'Capacité', { min: 0 })
-  });
+    const updatedWarehouse = await warehouses.update(req.params.id, {
+      nom: readOptionalString(req.body, 'nom', warehouse.nom, 'Nom'),
+      ville: readOptionalString(req.body, 'ville', warehouse.ville, 'Ville'),
+      adresse: readOptionalString(req.body, 'adresse', warehouse.adresse ?? null, 'Adresse'),
+      capacite: readOptionalNumber(req.body, 'capacite', warehouse.capacite ?? null, 'Capacité', { min: 0 })
+    });
 
-  res.json({
-    service: 'entrepot',
-    endpoint: `/edit/${req.params.id}`,
-    status: 'success',
-    message: 'Entrepôt modifié avec succès',
-    data: formatWarehouseDetails(updatedWarehouse)
-  });
-}));
+    res.json({
+      service: 'entrepot',
+      endpoint: `/edit/${req.params.id}`,
+      status: 'success',
+      message: 'Entrepôt modifié avec succès',
+      data: formatWarehouseDetails(updatedWarehouse)
+    });
+  })
+);
 
-app.delete('/delete/:id', asyncRoute(async (req, res) => {
-  const warehouse = await warehouses.findById(req.params.id);
-  if (!warehouse) {
-    throw httpError(404, 'Entrepôt introuvable');
-  }
+app.delete(
+  '/delete/:id',
+  asyncRoute(async (req, res) => {
+    const warehouse = await warehouses.findById(req.params.id);
+    if (!warehouse) {
+      throw httpError(404, 'Entrepôt introuvable');
+    }
 
-  await warehouses.remove(req.params.id);
+    await warehouses.remove(req.params.id);
 
-  res.json({
-    service: 'entrepot',
-    endpoint: `/delete/${req.params.id}`,
-    status: 'success',
-    message: 'Entrepôt supprimé avec succès',
-    data: formatWarehouseSummary(warehouse)
-  });
-}));
+    res.json({
+      service: 'entrepot',
+      endpoint: `/delete/${req.params.id}`,
+      status: 'success',
+      message: 'Entrepôt supprimé avec succès',
+      data: formatWarehouseSummary(warehouse)
+    });
+  })
+);
 
 registerCommonHandlers(app, serviceName);
 listen(app, serviceName, 3009);

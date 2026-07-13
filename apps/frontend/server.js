@@ -10,24 +10,30 @@ const port = Number(process.env.PORT || 5173);
 const trustProxyAuthHeaders = process.env.TRUST_PROXY_AUTH_HEADERS === 'true';
 
 app.disable('x-powered-by');
-app.use(helmet({
-  contentSecurityPolicy: {
-    directives: {
-      defaultSrc: ["'self'"],
-      baseUri: ["'self'"],
-      connectSrc: ["'self'"],
-      fontSrc: ["'self'", 'data:'],
-      formAction: ["'self'"],
-      imgSrc: ["'self'", 'data:'],
-      objectSrc: ["'none'"],
-      scriptSrc: ["'self'"],
-      styleSrc: ["'self'", "'unsafe-inline'"]
+app.use(
+  helmet({
+    contentSecurityPolicy: {
+      directives: {
+        defaultSrc: ["'self'"],
+        baseUri: ["'self'"],
+        connectSrc: ["'self'"],
+        fontSrc: ["'self'", 'data:'],
+        formAction: ["'self'"],
+        imgSrc: ["'self'", 'data:'],
+        objectSrc: ["'none'"],
+        scriptSrc: ["'self'"],
+        styleSrc: ["'self'", "'unsafe-inline'"]
+      }
     }
-  }
-}));
+  })
+);
 
 app.get('/api/me', (req, res) => {
   res.json(identityFromAuthHeaders(req, { trustProxyAuthHeaders }));
+});
+
+app.get('/health', (req, res) => {
+  res.json({ service: 'frontend', status: 'ok' });
 });
 
 app.use(express.static(path.join(__dirname, 'dist')));

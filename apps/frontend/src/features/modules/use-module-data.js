@@ -79,27 +79,27 @@ export function useModuleData() {
   }
 
   async function createRecord(service, values) {
-    return mutateRecord(service, `Création ${service.label}`, async () => (
+    return mutateRecord(service, `Création ${service.label}`, async () =>
       requestApi(apiPath(service.key, 'create'), {
         method: 'POST',
         body: JSON.stringify(toPayload(service, values))
       })
-    ));
+    );
   }
 
   async function editRecord(service, id, values) {
-    return mutateRecord(service, `Modification ${service.label}`, async () => (
+    return mutateRecord(service, `Modification ${service.label}`, async () =>
       requestApi(apiPath(service.key, 'edit', id), {
         method: 'PATCH',
         body: JSON.stringify(toPayload(service, values, { partial: true }))
       })
-    ));
+    );
   }
 
   async function deleteRecord(service, id) {
-    return mutateRecord(service, `Suppression ${service.label}`, async () => (
+    return mutateRecord(service, `Suppression ${service.label}`, async () =>
       requestApi(apiPath(service.key, 'delete', id), { method: 'DELETE' })
-    ));
+    );
   }
 
   async function mutateRecord(service, title, task) {

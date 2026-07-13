@@ -1,8 +1,12 @@
 export async function requestApi(path, options = {}) {
+  const method = (options.method || 'GET').toUpperCase();
+  const requestId = crypto.randomUUID();
   const response = await fetch(path, {
     ...options,
     headers: {
       ...(options.body ? { 'Content-Type': 'application/json' } : {}),
+      'X-Request-Id': requestId,
+      ...(method === 'POST' ? { 'Idempotency-Key': requestId } : {}),
       ...options.headers
     }
   });

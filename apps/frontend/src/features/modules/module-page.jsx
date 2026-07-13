@@ -22,14 +22,7 @@ import { AppIcon } from '@/components/app/app-icon.jsx';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow
-} from '@/components/ui/table';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { formatCell, labelForField } from './module-format.js';
 import { DeleteDialog, DetailDialog, FormDialog } from './module-dialogs.jsx';
 import { initialFormValues, valuesFromRecord } from './module-payload.js';
@@ -38,7 +31,12 @@ export function ModulePage({ busy, onCreate, onDelete, onEdit, onEnsureList, onV
   const [sorting, setSorting] = useState([]);
   const [globalFilter, setGlobalFilter] = useState('');
   const [pagination, setPagination] = useState({ pageIndex: 0, pageSize: 8 });
-  const [formDialog, setFormDialog] = useState({ open: false, mode: 'create', id: null, values: initialFormValues(service) });
+  const [formDialog, setFormDialog] = useState({
+    open: false,
+    mode: 'create',
+    id: null,
+    values: initialFormValues(service)
+  });
   const [detailDialog, setDetailDialog] = useState({ open: false, title: '', payload: null });
   const [deleteRow, setDeleteRow] = useState(null);
 
@@ -49,32 +47,59 @@ export function ModulePage({ busy, onCreate, onDelete, onEdit, onEnsureList, onV
     setPagination({ pageIndex: 0, pageSize: 8 });
   }, [service.key]);
 
-  const columns = useMemo(() => ([
-    ...service.summaryFields.map((field) => ({
-      accessorKey: field,
-      header: labelForField(service, field),
-      cell: ({ getValue }) => formatCell(getValue())
-    })),
-    {
-      id: 'actions',
-      enableGlobalFilter: false,
-      enableSorting: false,
-      header: 'Actions',
-      cell: ({ row }) => (
-        <div className="flex items-center justify-end gap-1">
-          <Button aria-label="Voir" disabled={busy} onClick={() => handleView(row.original)} size="icon-sm" title="Voir" type="button" variant="ghost">
-            <AppIcon icon={EyeIcon} size={15} />
-          </Button>
-          <Button aria-label="Modifier" disabled={busy} onClick={() => openEditDialog(row.original)} size="icon-sm" title="Modifier" type="button" variant="ghost">
-            <AppIcon icon={Edit02Icon} size={15} />
-          </Button>
-          <Button aria-label="Supprimer" disabled={busy} onClick={() => setDeleteRow(row.original)} size="icon-sm" title="Supprimer" type="button" variant="destructive">
-            <AppIcon icon={Delete02Icon} size={15} />
-          </Button>
-        </div>
-      )
-    }
-  ]), [busy, service]);
+  const columns = useMemo(
+    () => [
+      ...service.summaryFields.map((field) => ({
+        accessorKey: field,
+        header: labelForField(service, field),
+        cell: ({ getValue }) => formatCell(getValue())
+      })),
+      {
+        id: 'actions',
+        enableGlobalFilter: false,
+        enableSorting: false,
+        header: 'Actions',
+        cell: ({ row }) => (
+          <div className="flex items-center justify-end gap-1">
+            <Button
+              aria-label="Voir"
+              disabled={busy}
+              onClick={() => handleView(row.original)}
+              size="icon-sm"
+              title="Voir"
+              type="button"
+              variant="ghost"
+            >
+              <AppIcon icon={EyeIcon} size={15} />
+            </Button>
+            <Button
+              aria-label="Modifier"
+              disabled={busy}
+              onClick={() => openEditDialog(row.original)}
+              size="icon-sm"
+              title="Modifier"
+              type="button"
+              variant="ghost"
+            >
+              <AppIcon icon={Edit02Icon} size={15} />
+            </Button>
+            <Button
+              aria-label="Supprimer"
+              disabled={busy}
+              onClick={() => setDeleteRow(row.original)}
+              size="icon-sm"
+              title="Supprimer"
+              type="button"
+              variant="destructive"
+            >
+              <AppIcon icon={Delete02Icon} size={15} />
+            </Button>
+          </div>
+        )
+      }
+    ],
+    [busy, service]
+  );
 
   const table = useReactTable({
     data: rows,
@@ -112,9 +137,8 @@ export function ModulePage({ busy, onCreate, onDelete, onEdit, onEnsureList, onV
   }
 
   async function handleFormSubmit(values) {
-    const success = formDialog.mode === 'create'
-      ? await onCreate(service, values)
-      : await onEdit(service, formDialog.id, values);
+    const success =
+      formDialog.mode === 'create' ? await onCreate(service, values) : await onEdit(service, formDialog.id, values);
 
     if (success) {
       setFormDialog((current) => ({ ...current, open: false }));
@@ -141,7 +165,11 @@ export function ModulePage({ busy, onCreate, onDelete, onEdit, onEnsureList, onV
         <CardContent className="grid gap-3 p-0">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div className="relative w-full max-w-sm">
-              <AppIcon className="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 text-zinc-500" icon={Search01Icon} size={15} />
+              <AppIcon
+                className="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 text-zinc-500"
+                icon={Search01Icon}
+                size={15}
+              />
               <Input
                 className="h-9 pl-8"
                 onChange={(event) => setGlobalFilter(event.target.value)}
@@ -181,17 +209,25 @@ export function ModulePage({ busy, onCreate, onDelete, onEdit, onEnsureList, onV
                 ))}
               </TableHeader>
               <TableBody>
-                {visibleRows.length ? visibleRows.map((row) => (
-                  <TableRow key={row.id}>
-                    {row.getVisibleCells().map((cell) => (
-                      <TableCell className={cell.column.id === 'actions' ? 'text-right' : 'text-zinc-800'} key={cell.id}>
-                        {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                      </TableCell>
-                    ))}
-                  </TableRow>
-                )) : (
+                {visibleRows.length ? (
+                  visibleRows.map((row) => (
+                    <TableRow key={row.id}>
+                      {row.getVisibleCells().map((cell) => (
+                        <TableCell
+                          className={cell.column.id === 'actions' ? 'text-right' : 'text-zinc-800'}
+                          key={cell.id}
+                        >
+                          {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                        </TableCell>
+                      ))}
+                    </TableRow>
+                  ))
+                ) : (
                   <TableRow>
-                    <TableCell className="h-36 text-center text-sm font-semibold text-zinc-500" colSpan={columns.length}>
+                    <TableCell
+                      className="h-36 text-center text-sm font-semibold text-zinc-500"
+                      colSpan={columns.length}
+                    >
                       Aucune donnée
                     </TableCell>
                   </TableRow>
@@ -205,11 +241,21 @@ export function ModulePage({ busy, onCreate, onDelete, onEdit, onEnsureList, onV
               Page {table.getState().pagination.pageIndex + 1} sur {Math.max(table.getPageCount(), 1)}
             </span>
             <div className="flex items-center gap-2">
-              <Button disabled={!table.getCanPreviousPage()} onClick={() => table.previousPage()} type="button" variant="outline">
+              <Button
+                disabled={!table.getCanPreviousPage()}
+                onClick={() => table.previousPage()}
+                type="button"
+                variant="outline"
+              >
                 <AppIcon icon={ChevronLeftIcon} size={14} />
                 Précédent
               </Button>
-              <Button disabled={!table.getCanNextPage()} onClick={() => table.nextPage()} type="button" variant="outline">
+              <Button
+                disabled={!table.getCanNextPage()}
+                onClick={() => table.nextPage()}
+                type="button"
+                variant="outline"
+              >
                 Suivant
                 <AppIcon icon={ChevronRightIcon} size={14} />
               </Button>
@@ -226,9 +272,18 @@ export function ModulePage({ busy, onCreate, onDelete, onEdit, onEnsureList, onV
         service={service}
       />
 
-      <DetailDialog dialog={detailDialog} onOpenChange={(open) => setDetailDialog((current) => ({ ...current, open }))} />
+      <DetailDialog
+        dialog={detailDialog}
+        onOpenChange={(open) => setDetailDialog((current) => ({ ...current, open }))}
+      />
 
-      <DeleteDialog busy={busy} onConfirm={handleDelete} onOpenChange={(open) => !open && setDeleteRow(null)} row={deleteRow} service={service} />
+      <DeleteDialog
+        busy={busy}
+        onConfirm={handleDelete}
+        onOpenChange={(open) => !open && setDeleteRow(null)}
+        row={deleteRow}
+        service={service}
+      />
     </>
   );
 }
