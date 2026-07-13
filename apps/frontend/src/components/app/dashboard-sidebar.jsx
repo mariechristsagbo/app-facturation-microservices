@@ -50,7 +50,10 @@ export function DashboardSidebar({ rowsByService }) {
                       <NavLink to={route}>
                         <AppIcon icon={Icon} size={16} />
                         <span>{service.label}</span>
-                        <Badge className="ml-auto group-data-[collapsible=icon]:hidden" variant={isActive ? 'default' : 'secondary'}>
+                        <Badge
+                          className="ml-auto group-data-[collapsible=icon]:hidden"
+                          variant={isActive ? 'default' : 'secondary'}
+                        >
                           {rowsByService[service.key]?.length ?? '-'}
                         </Badge>
                       </NavLink>

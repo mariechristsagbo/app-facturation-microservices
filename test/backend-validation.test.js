@@ -17,10 +17,22 @@ test('backend validation parses valid values', () => {
 });
 
 test('backend validation rejects invalid values with 400 errors', () => {
-  assert.equal(getStatus(() => readRequiredString({ nom: '' }, 'nom', 'Nom')), 400);
-  assert.equal(getStatus(() => readOptionalNumber({ prix: 'abc' }, 'prix', null, 'Prix')), 400);
-  assert.equal(getStatus(() => readOptionalDate({ date: '2026-99-99' }, 'date', null, 'Date')), 400);
-  assert.equal(getStatus(() => readOptionalEnum({ statut: 'x' }, 'statut', ['payée'], null, 'Statut')), 400);
+  assert.equal(
+    getStatus(() => readRequiredString({ nom: '' }, 'nom', 'Nom')),
+    400
+  );
+  assert.equal(
+    getStatus(() => readOptionalNumber({ prix: 'abc' }, 'prix', null, 'Prix')),
+    400
+  );
+  assert.equal(
+    getStatus(() => readOptionalDate({ date: '2026-99-99' }, 'date', null, 'Date')),
+    400
+  );
+  assert.equal(
+    getStatus(() => readOptionalEnum({ statut: 'x' }, 'statut', ['payée'], null, 'Statut')),
+    400
+  );
 });
 
 test('common error response masks unexpected 500 messages', () => {

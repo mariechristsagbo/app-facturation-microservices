@@ -5,7 +5,9 @@ export function createOrderStore(filePath, options = {}) {
 
   return {
     async all() {
-      const orders = db.prepare('SELECT id, client_id, date, total, statut, createdAt FROM orders ORDER BY id ASC').all();
+      const orders = db
+        .prepare('SELECT id, client_id, date, total, statut, createdAt FROM orders ORDER BY id ASC')
+        .all();
       return orders.map((order) => ({ ...order, lignes: getLines(db, order.id) }));
     },
 
@@ -18,11 +20,27 @@ export function createOrderStore(filePath, options = {}) {
 
     async create(order) {
       runTransaction(db, () => {
-        db.prepare(
-          'INSERT INTO orders (id, client_id, date, total, statut, createdAt) VALUES (?, ?, ?, ?, ?, ?)'
-        ).run(order.id, order.client_id, order.date, order.total, order.statut, order.createdAt);
+        db.prepare('INSERT INTO orders (id, client_id, date, total, statut, createdAt) VALUES (?, ?, ?, ?, ?, ?)').run(
+          order.id,
+          order.client_id,
+          order.date,
+          order.total,
+          order.statut,
+          order.createdAt
+        );
 
         insertLines(db, order.id, order.lignes);
+      });
+
+      return this.findById(order.id);
+    },
+
+    async createWithGeneratedId(buildOrder) {
+      const order = runTransaction(db, () => {
+        const id = nextNumericId(db);
+        const generatedOrder = buildOrder(id);
+        insertOrder(db, generatedOrder);
+        return generatedOrder;
       });
 
       return this.findById(order.id);
@@ -35,9 +53,7 @@ export function createOrderStore(filePath, options = {}) {
       }
 
       runTransaction(db, () => {
-        db.prepare(
-          'UPDATE orders SET client_id = ?, date = ?, total = ?, statut = ? WHERE id = ?'
-        ).run(
+        db.prepare('UPDATE orders SET client_id = ?, date = ?, total = ?, statut = ? WHERE id = ?').run(
           patch.client_id ?? existing.client_id,
           patch.date ?? existing.date,
           patch.total ?? existing.total,
@@ -60,14 +76,30 @@ export function createOrderStore(filePath, options = {}) {
     },
 
     async nextNumericId() {
-      const row = db.prepare('SELECT COALESCE(MAX(id), 0) + 1 AS id FROM orders').get();
-      return row.id;
+      return nextNumericId(db);
     },
 
     close() {
       db.close();
     }
   };
+}
+
+function insertOrder(db, order) {
+  db.prepare('INSERT INTO orders (id, client_id, date, total, statut, createdAt) VALUES (?, ?, ?, ?, ?, ?)').run(
+    order.id,
+    order.client_id,
+    order.date,
+    order.total,
+    order.statut,
+    order.createdAt
+  );
+
+  insertLines(db, order.id, order.lignes);
+}
+
+function nextNumericId(db) {
+  return db.prepare('SELECT COALESCE(MAX(id), 0) + 1 AS id FROM orders').get().id;
 }
 
 function getLines(db, orderId) {

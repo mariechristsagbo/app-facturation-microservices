@@ -44,8 +44,8 @@ test('order store persists order lines in a relational table', async (t) => {
   assert.deepEqual(await store.all(), []);
   assert.equal(await store.nextNumericId(), 1);
 
-  const created = await store.create({
-    id: await store.nextNumericId(),
+  const created = await store.createWithGeneratedId((id) => ({
+    id,
     client_id: 7,
     date: '2026-06-04',
     total: 2500,
@@ -55,7 +55,7 @@ test('order store persists order lines in a relational table', async (t) => {
       { produit_id: 4, quantite: 1, prix: 500 }
     ],
     createdAt: '2026-06-04T00:00:00.000Z'
-  });
+  }));
 
   assert.deepEqual(created, {
     id: 1,
@@ -80,15 +80,15 @@ test('order store persists order lines in a relational table', async (t) => {
   assert.equal(await store.remove(1), true);
   assert.deepEqual(await store.all(), []);
 
-  const recreated = await store.create({
-    id: await store.nextNumericId(),
+  const recreated = await store.createWithGeneratedId((id) => ({
+    id,
     client_id: 8,
     date: '2026-06-05',
     total: 900,
     statut: 'validée',
     lignes: [{ produit_id: 9, quantite: 1, prix: 900 }],
     createdAt: '2026-06-05T00:00:00.000Z'
-  });
+  }));
 
   assert.deepEqual(recreated.lignes, [{ produit_id: 9, quantite: 1, prix: 900 }]);
 });

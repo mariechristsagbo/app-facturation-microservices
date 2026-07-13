@@ -27,9 +27,7 @@ export function toPayload(service, values, options = {}) {
 }
 
 export function schemaForService(service, options = {}) {
-  const shape = Object.fromEntries(
-    service.fields.map((field) => [field.name, schemaForField(field, options)])
-  );
+  const shape = Object.fromEntries(service.fields.map((field) => [field.name, schemaForField(field, options)]));
 
   return z.object(shape).transform((values) => buildPayload(service, values, options));
 }
@@ -44,7 +42,8 @@ export class ValidationError extends Error {
 }
 
 function schemaForField(field, options) {
-  return z.any()
+  return z
+    .any()
     .optional()
     .superRefine((value, context) => {
       if (isEmpty(value)) {
@@ -100,9 +99,7 @@ function buildPayload(service, values, options) {
 }
 
 function removeEmptyValues(values) {
-  return Object.fromEntries(
-    Object.entries(values).filter(([, value]) => value !== undefined)
-  );
+  return Object.fromEntries(Object.entries(values).filter(([, value]) => value !== undefined));
 }
 
 function isEmpty(value) {

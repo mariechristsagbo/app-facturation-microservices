@@ -19,7 +19,12 @@ export function UserMenu({ me }) {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button aria-label="Menu utilisateur" className="h-auto max-w-[18rem] gap-3 rounded-full px-2 py-1.5" type="button" variant="ghost">
+        <Button
+          aria-label="Menu utilisateur"
+          className="h-auto max-w-[18rem] gap-3 rounded-full px-2 py-1.5"
+          type="button"
+          variant="ghost"
+        >
           <Avatar className="size-10 bg-violet-100 text-violet-700" size="lg">
             <AvatarFallback className="bg-violet-100 text-xs font-semibold uppercase text-violet-700">
               {initialsFor(sessionLabel)}

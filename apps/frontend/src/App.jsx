@@ -35,7 +35,9 @@ export default function App() {
             <div className="flex min-w-0 items-center gap-3">
               <SidebarTrigger className="md:hidden" />
               <div className="min-w-0">
-                <h1 className="mt-1 text-3xl font-black leading-tight text-zinc-950 md:text-4xl">{activeService.label}</h1>
+                <h1 className="mt-1 text-3xl font-black leading-tight text-zinc-950 md:text-4xl">
+                  {activeService.label}
+                </h1>
               </div>
             </div>
 
@@ -46,7 +48,7 @@ export default function App() {
             <Route path="/" element={<Navigate to={DEFAULT_ROUTE} replace />} />
             {FRONTEND_SERVICES.map((service) => (
               <Route
-                element={(
+                element={
                   <ModulePage
                     busy={busy}
                     key={service.key}
@@ -58,7 +60,7 @@ export default function App() {
                     rows={rowsByService[service.key] || []}
                     service={service}
                   />
-                )}
+                }
                 key={service.key}
                 path={SERVICE_ROUTES[service.key]}
               />

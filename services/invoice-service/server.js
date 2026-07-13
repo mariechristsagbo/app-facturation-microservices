@@ -5,7 +5,14 @@ import { requireEnv } from '../../shared/env.js';
 import { asyncRoute, createServiceApp, httpError, listen, registerCommonHandlers } from '../../shared/express.js';
 import { getJson } from '../../shared/http.js';
 import { readSqliteSchema, SqliteStore, sqliteFilePath } from '../../shared/sqlite.js';
-import { readOptionalDate, readOptionalEnum, readOptionalNumber, readOptionalString, readRequiredPositiveInteger } from '../../shared/validation.js';
+import {
+  readOptionalDate,
+  readOptionalEnum,
+  readOptionalNumber,
+  readOptionalPositiveInteger,
+  readOptionalString,
+  readRequiredPositiveInteger
+} from '../../shared/validation.js';
 
 const serviceName = 'invoice-service';
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -20,81 +27,102 @@ const INVOICE_STATUSES = ['non payée', 'partiellement payée', 'payée', 'annul
 
 const app = createServiceApp(serviceName);
 
-app.post('/create', asyncRoute(async (req, res) => {
-  const invoice = await createInvoice(req.body, { validateOrder: true });
+app.post(
+  '/create',
+  asyncRoute(async (req, res) => {
+    const invoice = await createInvoice(req.body, { validateOrder: true });
 
-  res.status(201).json({
-    service: 'facture',
-    endpoint: '/create',
-    status: 'success',
-    message: 'Facture générée avec succès',
-    data: formatInvoiceSummary(invoice)
-  });
-}));
+    res.status(201).json({
+      service: 'facture',
+      endpoint: '/create',
+      status: 'success',
+      message: 'Facture générée avec succès',
+      data: formatInvoiceSummary(invoice)
+    });
+  })
+);
 
-app.get('/list', asyncRoute(async (req, res) => {
-  const data = await invoices.all();
+app.get(
+  '/list',
+  asyncRoute(async (req, res) => {
+    const data = await invoices.all();
 
-  res.json({
-    service: 'facture',
-    endpoint: '/list',
-    count: data.length,
-    data: data.map(formatInvoiceSummary)
-  });
-}));
+    res.json({
+      service: 'facture',
+      endpoint: '/list',
+      count: data.length,
+      data: data.map(formatInvoiceSummary)
+    });
+  })
+);
 
-app.get('/view/:id', asyncRoute(async (req, res) => {
-  const invoice = await invoices.findById(req.params.id);
-  if (!invoice) {
-    throw httpError(404, 'Facture introuvable');
-  }
+app.get(
+  '/view/:id',
+  asyncRoute(async (req, res) => {
+    const invoice = await invoices.findById(req.params.id);
+    if (!invoice) {
+      throw httpError(404, 'Facture introuvable');
+    }
 
-  res.json({
-    service: 'facture',
-    endpoint: `/view/${req.params.id}`,
-    data: formatInvoiceDetails(invoice)
-  });
-}));
+    res.json({
+      service: 'facture',
+      endpoint: `/view/${req.params.id}`,
+      data: formatInvoiceDetails(invoice)
+    });
+  })
+);
 
-app.patch('/edit/:id', asyncRoute(async (req, res) => {
-  const invoice = await invoices.findById(req.params.id);
-  if (!invoice) {
-    throw httpError(404, 'Facture introuvable');
-  }
+app.patch(
+  '/edit/:id',
+  asyncRoute(async (req, res) => {
+    const invoice = await invoices.findById(req.params.id);
+    if (!invoice) {
+      throw httpError(404, 'Facture introuvable');
+    }
 
-  const updatedInvoice = await invoices.update(req.params.id, {
-    commande_id: readOptionalNumber(req.body, 'commande_id', invoice.commande_id, 'Commande', { integer: true, min: 1 }),
-    numero: readOptionalString(req.body, 'numero', invoice.numero, 'Numéro'),
-    date_emission: readOptionalDate(req.body, 'date_emission', invoice.date_emission, 'Date émission'),
-    montant: readOptionalNumber(req.body, 'montant', invoice.montant, 'Montant', { min: 0 }),
-    statut: readOptionalEnum(req.body, 'statut', INVOICE_STATUSES, invoice.statut, 'Statut')
-  });
+    const orderId = readOptionalPositiveInteger(req.body, 'commande_id', invoice.commande_id, 'Commande');
+    if (orderId !== invoice.commande_id) {
+      await getOrder(orderId);
+      await assertOrderHasNoInvoice(orderId, invoice.id);
+    }
 
-  res.json({
-    service: 'facture',
-    endpoint: `/edit/${req.params.id}`,
-    status: 'success',
-    message: 'Facture modifiée avec succès',
-    data: formatInvoiceDetails(updatedInvoice)
-  });
-}));
+    const updatedInvoice = await invoices.update(req.params.id, {
+      commande_id: orderId,
+      numero: readOptionalString(req.body, 'numero', invoice.numero, 'Numéro'),
+      date_emission: readOptionalDate(req.body, 'date_emission', invoice.date_emission, 'Date émission'),
+      montant: readOptionalNumber(req.body, 'montant', invoice.montant, 'Montant', { min: 0 }),
+      statut: readOptionalEnum(req.body, 'statut', INVOICE_STATUSES, invoice.statut, 'Statut')
+    });
 
-app.delete('/delete/:id', asyncRoute(async (req, res) => {
-  const invoice = await invoices.findById(req.params.id);
-  if (!invoice) {
-    throw httpError(404, 'Facture introuvable');
-  }
+    res.json({
+      service: 'facture',
+      endpoint: `/edit/${req.params.id}`,
+      status: 'success',
+      message: 'Facture modifiée avec succès',
+      data: formatInvoiceDetails(updatedInvoice)
+    });
+  })
+);
 
-  await invoices.remove(req.params.id);
+app.delete(
+  '/delete/:id',
+  asyncRoute(async (req, res) => {
+    const invoice = await invoices.findById(req.params.id);
+    if (!invoice) {
+      throw httpError(404, 'Facture introuvable');
+    }
 
-  res.json({
-    service: 'facture',
-    endpoint: `/delete/${req.params.id}`,
-    status: 'success',
-    message: 'Facture supprimée avec succès',
-    data: formatInvoiceSummary(invoice)
-  });
-}));
+    await invoices.remove(req.params.id);
+
+    res.json({
+      service: 'facture',
+      endpoint: `/delete/${req.params.id}`,
+      status: 'success',
+      message: 'Facture supprimée avec succès',
+      data: formatInvoiceSummary(invoice)
+    });
+  })
+);
 
 registerCommonHandlers(app, serviceName);
 listen(app, serviceName, 3006);
@@ -103,17 +131,13 @@ async function createInvoice(body, options = {}) {
   const orderId = readRequiredPositiveInteger(body, 'commande_id', 'Commande');
   const amount = readOptionalNumber(body, 'montant', null, 'Montant', { min: 0 });
 
-  const existing = (await invoices.all()).find((invoice) => String(getOrderId(invoice)) === String(orderId));
-  if (existing) {
-    throw httpError(409, 'Cette commande a déjà une facture');
-  }
+  await assertOrderHasNoInvoice(orderId);
 
   const order = options.validateOrder ? await getOrder(orderId) : { id: orderId, total: amount ?? 0 };
-  const invoiceId = await invoices.nextNumericId();
   const date = readOptionalDate(body, 'date_emission', formatDate(), 'Date émission');
   const invoiceAmount = amount ?? order.total;
 
-  return invoices.create({
+  return invoices.createWithGeneratedId((invoiceId) => ({
     id: invoiceId,
     commande_id: Number(order.id ?? orderId),
     numero: readOptionalString(body, 'numero', formatInvoiceNumber(invoiceId, date), 'Numéro'),
@@ -121,11 +145,23 @@ async function createInvoice(body, options = {}) {
     montant: invoiceAmount,
     statut: readOptionalEnum(body, 'statut', INVOICE_STATUSES, 'non payée', 'Statut'),
     createdAt: new Date(`${date}T00:00:00.000Z`).toISOString()
-  });
+  }));
+}
+
+async function assertOrderHasNoInvoice(orderId, excludedInvoiceId = null) {
+  const existing = (await invoices.all()).find(
+    (invoice) => String(getOrderId(invoice)) === String(orderId) && String(invoice.id) !== String(excludedInvoiceId)
+  );
+  if (existing) {
+    throw httpError(409, 'Cette commande a déjà une facture');
+  }
 }
 
 async function getOrder(orderId) {
-  const response = await getJson(`${ORDER_SERVICE_URL}/view/${encodeURIComponent(orderId)}`, 'Impossible de récupérer la commande');
+  const response = await getJson(
+    `${ORDER_SERVICE_URL}/view/${encodeURIComponent(orderId)}`,
+    'Impossible de récupérer la commande'
+  );
   return response.data;
 }
 

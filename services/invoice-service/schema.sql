@@ -7,3 +7,6 @@ CREATE TABLE IF NOT EXISTS invoices (
   statut TEXT NOT NULL,
   createdAt TEXT NOT NULL
 );
+
+CREATE UNIQUE INDEX IF NOT EXISTS idx_invoices_commande_id ON invoices(commande_id);
+CREATE UNIQUE INDEX IF NOT EXISTS idx_invoices_numero ON invoices(numero);
